@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computational Neuroscience — Story Notes (W1-12)</title>
+<script>
+window.MathJax = { tex: { inlineMath: [[String.fromCharCode(92)+"(",String.fromCharCode(92)+")"]], displayMath: [[String.fromCharCode(92)+"[",String.fromCharCode(92)+"]"]] }, svg: { fontCache: "global" } };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{--ink:#1d2433;--mut:#5b6478;--acc:#1565c0;--bg:#fff;--side:#eef4ff;--ok:#e6f4ea;--warn:#fff8e1;}
+*{box-sizing:border-box}body{font-family:Georgia,'Times New Roman',serif;color:var(--ink);max-width:980px;margin:0 auto;padding:24px 20px 80px;line-height:1.62;background:var(--bg)}
+h1{font-size:30px;line-height:1.2;margin:6px 0}h2{font-size:23px;border-bottom:3px solid var(--acc);padding-bottom:6px;margin-top:44px}h3{font-size:17px;margin:18px 0 6px;color:#0d47a1}
+p,li{font-size:15.5px}.meta{color:var(--mut);font-size:13px}
+a{color:var(--acc)}.toc{background:#f7f9ff;border:1px solid #d6e2ff;border-radius:10px;padding:14px 18px}.toc ol{margin:8px 0;padding-left:22px}
+.hook{background:#f2f7ff;border-left:5px solid var(--acc);padding:10px 14px;border-radius:0 8px 8px 0;font-style:italic}
+.grid{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:900px){.withside{display:grid;grid-template-columns:1fr 300px;gap:18px}.rail{display:flex;flex-direction:column;gap:12px;height:fit-content}.sidebar{background:var(--side);border:1px solid #bcd2ff;border-radius:10px;padding:12px 14px;font-size:13.5px;height:fit-content}.sidebar h4{margin:4px 0 6px;font-size:14px;color:#0d47a1}}
+.exam{background:var(--ok);border:1px solid #34a853;border-radius:10px;padding:10px 14px}
+.stumble{background:var(--warn);border:1px solid #e0b400;border-radius:10px;padding:10px 14px}
+.fullform{background:#fff7e6;border:1px solid #e0b400;border-radius:10px;padding:12px 14px;font-size:13.5px}.fullform h4{margin:4px 0 6px;font-size:14px;color:#7a5200}.fullform dt{font-weight:bold;margin-top:8px}.fullform dd{margin:2px 0 6px 0}.eq{background:#f6f6f6;border:1px solid #ddd;border-radius:8px;padding:10px 14px;font-family:'Cambria Math',Georgia,serif;overflow-x:auto}
+figure{border:1px solid #e2e2e2;border-radius:10px;padding:10px;margin:14px 0;page-break-inside:avoid;background:#fff}figure img{max-width:100%;height:auto;display:block;margin:0 auto}figcaption{font-size:13px;color:var(--mut);text-align:center;margin-top:6px}
+.bridge{border-top:1px dashed #999;margin-top:16px;padding-top:8px;font-style:italic;color:#333}
+.recall{border:1px dashed var(--acc);border-radius:8px;padding:8px 12px;margin-top:10px}
+.gloss{border-bottom:1px dotted #1565c0;cursor:help;position:relative}
+.gloss .tip{display:none;position:absolute;z-index:50;left:0;top:1.4em;width:max-content;min-width:280px;max-width:min(500px,90vw);background:#fffdf4;border:1px solid #e0b400;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.65;color:#1d2433;box-shadow:0 6px 24px rgba(0,0,0,.18);font-style:normal;font-weight:normal;overflow-wrap:break-word;hyphens:none;white-space:normal}
+.gloss:hover > .tip,.gloss:focus > .tip{display:block}
+.gloss .tip b.t{color:#0d47a1;display:block;margin-bottom:4px;font-size:14px}
+.eq.gloss-eq{cursor:help;position:relative;overflow:visible}.eq.gloss-eq .tip{top:100%!important;margin-top:10px;left:0;width:max-content;min-width:300px;max-width:min(520px,92vw);white-space:pre-line;line-height:1.7}
+figure.gloss-fig{position:relative}
+.gloss.tip-suppressed > .tip{display:none!important}figure.gloss-fig .tip{top:100%!important;margin-top:10px;left:0;width:max-content;min-width:300px;max-width:min(520px,94vw);white-space:pre-line;line-height:1.7}
+figure.gloss-fig{cursor:help}
+@media print{.gloss .tip{display:none!important}.gloss{border-bottom:none}}
+
+code{background:#f1f1f1;padding:1px 5px;border-radius:4px;font-size:13.5px}
+@media print{body{max-width:none;padding:0;font-size:12.5pt}.toc,.noprint{display:none}h2{page-break-before:always}.qblock,figure,.sidebar,.exam{page-break-inside:avoid}}
+</style></head><body>
+<p class="meta">Computational Neuroscience (NPTEL noc26_bt87) — Weeks 1–12 lecture notes rewritten as one story. Both tracks: intuition-first + exam-cram final forms. Sources: your 12 PDFs.</p>
+<h1>From Quiet Cell to Smart Brain</h1>
+<p><b>Thesis in one line:</b> a leaky bag of salt water becomes excitable (HH), its geometry decides if it spikes (phase plane), its spikes are noisy (Poisson), we average that noise to read what it likes (STA/receptive fields), we quantify how well stimuli separate (KL/discrimination) and how well we can guess them back (decoding/ROC/Fisher), then we let the wiring itself change with experience (STP/LTP/STDP/BCM/normalization, adaptation, attention), and finally ask what wiring <i>should</i> exist for efficient vision and hearing.</p>
+<div class="toc"><b>Contents (story order, not week order)</b>
+<ol>
+<li><a href="#c1">The cast: neuron doctrine, synapses, brain map</a></li>
+<li><a href="#c2">The signal: voltage, channels, the spike</a></li>
+<li><a href="#c3">The equations: LIF → Hodgkin–Huxley → Morris–Lecar</a></li>
+<li><a href="#c4">The geometry: phase planes decide everything</a></li>
+<li><a href="#c5">The noise: Poisson, PSTH, correlations, receptive fields</a></li>
+<li><a href="#c6">The code: STA, LN models, reconstruction, information</a></li>
+<li><a href="#c7">How separable? discrimination, KL, spike distances</a></li>
+<li><a href="#c8">Guessing back: decoding, Fisher, ROC, STRF plasticity</a></li>
+<li><a href="#c9">The wiring changes I: synapse machine + short-term plasticity</a></li>
+<li><a href="#c10">The wiring changes II: LTP/LTD, Hebb, STDP, BCM, normalization</a></li>
+<li><a href="#c11">Gain control: adaptation, attention, development</a></li>
+<li><a href="#c12">What <i>should</i> the code be? efficient/sparse coding + big problems</a></li>
+<li><a href="#cheat">20 ideas if you remember nothing else</a></li>
+</ol></div>
+
+<h2 id="c1">1. The cast</h2>
+<div class="hook">Golgi thought the brain was one continuous plumbing network. Cajal, staring at single stained cells, said: no — it is 100 billion separate units talking at gaps. Electron microscopy proved Cajal right. Everything else in this course is what those gaps compute.</div>
+<div class="withside"><div>
+<h3>Story</h3>
+<ul>
+<li><b>Neuron:</b> soma (nucleus, housekeeping) + dendrites (input fan-in, up to ~10,000 contacts) + axon (output wire, up to ~1 m) + synapse (terminal contact). One neuron → up to 10,000 in, 10,000 out.</li>
+<li><b>Two synapse physics:</b> <i>chemical</i> (vesicle → transmitter → receptor, slow, flexible, most common: glutamate=excite, GABA=inhibit, plus dopamine/serotonin/ACh/NE) vs <i>electrical/gap-junction</i> (direct current, fast, rare).</li>
+<li><b>Plasticity preview (Hebb 1949):</b> active synapses change. Basis of learning/memory/perception/attention. Details in Ch.9–10.</li>
+<li><b>Where:</b> cerebrum (2 hemispheres + corpus callosum; frontal=plan/decide, parietal=touch/space, temporal=sound/language/memory, occipital=vision) + cerebellum (coordination) + brainstem (medulla=breath/heart, pons=sleep relay). Cortex is layered; layer 4 ≈ thalamic input layer. Cuts: horizontal/coronal/sagittal. Bumps: gyrus=ridge, sulcus=groove, fissure=deep divider (central=Rolando motor|sensory, lateral=lobes).</li>
+<li><b>How we watch:</b> sensory systems = transducers (light→voltage etc.). Recordings span scales: patch clamp (single channel, W2), single-unit spikes, EEG/MEG (fast, blurry space), fMRI (slow, sharp space). Your W1L5 methods + W2 patch clamp are the same ladder from ion to brain.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_1_-_full_p0_x106.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W1: neuron parts + brain divisions — keep this mental picture for every later equation.</figcaption></figure>
+<figure><img loading="lazy" src="story_images/Week_1_-_full_p0_x110.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W1: networks + chemical vs electrical synapses.</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> neuron doctrine vs reticular theory; 10k fan-in/out numbers; layer 4 input; central vs lateral sulcus; chemical transmitters (Glu/GABA) vs gap junctions.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — words you must own</h4>
+<b>Transduction</b> = stimulus → membrane current.<br><b>Soma/dendrite/axon/synapse</b> = keep house / listen / shout / handshake.<br><b>Excitatory vs inhibitory</b> = push toward spike vs pull away. No equation yet — just anatomy + direction.</aside><aside class="fullform"><h4>Full forms — Ch.1</h4><dl>
+<dt>Soma / dendrite / axon</dt><dd>Keep house / listen / shout. Exam trap: axon is output, dendrite input (except rare dendritic release).</dd>
+<dt>Corpus callosum</dt><dd>Bridge between hemispheres. Cut it → split-brain.</dd>
+</dl></aside></div></div>
+<p class="bridge">So we have actors and stage. Next: what is the electrical language they shout in?</p>
+
+<h2 id="c2">2. The signal</h2>
+<div class="hook">Rest at −70 mV. A nudge past threshold, and in 1 ms the cell rockets to +40 mV then crashes — that rocket <i>is</i> the bit of the brain.</div>
+<div class="withside"><div>
+<h3>Story in 7 steps (must memorize order)</h3>
+<ol>
+<li>Rest: K⁺-leaky, Na⁺ shut, inside negative (~−70 mV).</li>
+<li>Depolarize: excitatory input opens voltage-gated Na⁺, Na⁺ rushes in.</li>
+<li>Threshold: positive feedback — more depolarization → more Na⁺ channels.</li>
+<li>Rise to ~+40 mV.</li>
+<li>Fall: Na⁺ inactivates, K⁺ opens, K�enses out → repolarize.</li>
+<li>Undershoot: transient hyperpolarization.</li>
+<li>Refractory: <i>absolute</i> (Na⁺ inactivated, no spike possible → one-way traffic) then <i>relative</i> (K⁺ still open, need bigger kick).</li>
+</ol>
+<h3>Intuition + final forms</h3>
+<div class="eq">\(V_m = V_{in}-V_{out}.\) Nernst (one ion): \[E=\frac{RT}{zF}\ln\frac{C_{out}}{C_{in}}.\] If \(V_m=E_{ion}\), no net flow. Na \(E\approx+40\) mV, K \(E\approx-85\) mV. Clamp V + block one channel → isolate the other.</div>
+<ul>
+<li><b>Patch clamp (W2):</b> glass pipette seals a patch → measure single-channel current. This is how HH gating variables were fit.</li>
+<li><b>Current injection:</b> step current → watch Vm charge, then spike train. Synaptic current is the same idea, just chemically gated.</li>
+</ul>
+
+<div class="exam"><b>Exam cue:</b> AP stage order + channel states; absolute vs relative refractory mechanism; Nernst sign; why voltage-clamp + blockers isolate Na vs K.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — Nernst in 30 sec</h4>Diffusion pushes ions down concentration; voltage pulls them back. Balance = Nernst potential. Two different batteries (Na +40, K −85) fight through conductances — whoever is more open wins Vm. That fight <i>is</i> the HH model next.</aside><aside class="fullform"><h4>Full forms — Ch.2</h4><dl>
+<dt>Depolarize / hyperpolarize / repolarize</dt><dd>Less negative / more negative / back to rest. Trap: hyperpolarization can <i>enable</i> next spike (anode-break, Ch.4).</dd>
+<dt>Patch clamp</dt><dd>Seal + measure single-channel current. Job: fit HH gates.</dd>
+<dt>Threshold</dt><dd>Voltage where Na influx outruns leak+K. Not fixed — shifts with h,n (refractory).</dd>
+</dl></aside></div></div>
+<p class="bridge">We can describe the rocket. Can we write it as a circuit? Yes — but the cheap circuit lies.</p>
+
+<h2 id="c3">3. The equations</h2>
+<div class="hook">The cheapest model spikes whenever its capacitor hits threshold — like a bucket that yells every time it overflows. Real neurons have gates that open and shut with voltage. Hodgkin and Huxley measured those gates; Morris and Lecar kept only the plot.</div>
+<div class="withside"><div>
+<h3>LIF (point model) — intuition</h3>
+<p>Collapse the cell to one isopotential point: capacitor C + leak + synaptic current. No space (vs compartmental = split neuron into coupled isopotential pieces, Vm(x)). Inject step → exponential charge → hit Vth → declare spike → reset. <b>Limitation your notes stress:</b> no voltage-gated channels, so it fires every time it charges — no real shape, no refractoriness, no inactivation.</p>
+<div class="eq">LIF final form: \[C\frac{dV}{dt}=-\frac{V-E_L}{R}+I_{syn}\quad;\quad V\ge V_{th}\Rightarrow\text{spike + reset to }V_{reset}.\] Compartments add axial coupling between neighbors.</div>
+<h3>HH — intuition + final form</h3>
+<p>Sodium needs 3 fast <b>m</b> gates to open + 1 slower <b>h</b> gate that shuts it (inactivation). Potassium needs 4 slow <b>n</b> gates. Speed order your notes repeat: <b>τm &lt; τh &lt; τn</b>. Conductances are powers because multiple gates must coincide:</p>
+<div class="eq">\[g_K=\bar{g}_K n^4,\quad g_{Na}=\bar{g}_{Na} m^3 h\]\[C\frac{dV}{dt}=-g_K(V-E_K)-g_{Na}(V-E_{Na})-g_L(V-E_L)+I_{ext}\]\[\dot{m}=\frac{m_\infty(V)-m}{\tau_m(V)},\; \dot{h}=\frac{h_\infty(V)-h}{\tau_h(V)},\; \dot{n}=\frac{n_\infty(V)-n}{\tau_n(V)}\]</div>
+<h3>Reduction + Morris–Lecar</h3>
+<ul>
+<li>HH has 4 vars (V,m,h,n). Fast V,m vs slow h,n → freeze slow → <b>V–m system</b> (study threshold) or freeze m→m∞, h→h∞ → <b>V–n system</b>. You lose full spike but keep threshold geometry.</li>
+<li><b>MLE:</b> swap Na→Ca (fast m→m∞), no inactivation (h=const), one K variable w (≈n). 2 equations, temperature factor φ tunes V vs w speed. This is the toy we phase-plane in Ch.4.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_3_-_Notes_p0_x76.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W3: LIF circuit vs HH gates (m³h, n⁴). If you only keep one image: this one.</figcaption></figure>
+<figure><img loading="lazy" src="story_images/Week_3_-_Notes_p0_x82.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W3: clamp traces showing activation vs inactivation — why HH needed powers.</figcaption></figure>
+<div class="stumble"><b>You might stumble:</b> powers (m³h) are not magic — they are probabilities that independent gates are simultaneously open, fit to clamp data. Reduction is not cheating — it keeps the fast/slow split that creates threshold.</div>
+<div class="exam"><b>Exam cue:</b> LIF equation + limitation; HH conductances; gate counts; τ ordering; what V–m vs V–n freezes; MLE state vars (V,w) + Ca swap.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — ODE in 1 min</h4>dV/dt = f(V,…) is a rule for velocity. Fixed point = velocity zero. Nullcline = curve where one velocity is zero. Intersection = equilibrium. Next chapter is just reading those crossings.</aside><aside class="fullform"><h4>Full forms — Ch.3 (you watched this, quick ref)</h4><dl>
+<dt>Isopotential</dt><dd>Same V everywhere in compartment. Job: lets us use one ODE per piece.</dd>
+<dt>\(m_\infty, h_\infty, n_\infty\)</dt><dd>Steady open probability at V. Job: fast gates snap to these; slow ones lag (that's threshold).</dd>
+<dt>\(m^3h\) / \(n^4\)</dt><dd>Probability all independent gates open together. Trap: powers are fits, not theory.</dd>
+</dl></aside></div></div>
+<p class="bridge">Equations written. But will they spike repeatedly, once, or never? Don't simulate blindly — draw the flow.</p>
+
+<h2 id="c4">4. The geometry</h2>
+<div class="hook">Two variables make a map. Arrows are velocities. Where arrows circle back on themselves forever, you have a rhythm — a limit cycle. The brain's repeat button.</div>
+<div class="withside"><div>
+<h3>How to read any phase plane (MLE V–w)</h3>
+<ul>
+<li><b>Quiver:</b> at each (V,w), arrow = (dV/dt, dw/dt). Follow arrows = trajectory V(t),w(t).</li>
+<li><b>Nullclines:</b> V-null (dV/dt=0), w-null (dw/dt=0). Crossings = fixed points.</li>
+<li><b>Existence–uniqueness:</b> if f,g continuous, one start → one trajectory. Trajectories never cross.</li>
+<li><b>Linearize at fixed point:</b> Jacobian J of partials → eigenvalues λ1,λ2: both real neg = stable node (sink); both pos = unstable node; complex ± = spiral (real part = stable/unstable); opposite signs = saddle (one in, one out).</li>
+<li><b>V–m HH reduced:</b> 3 equilibria (rest r=stable, s=saddle, top). Saddle's stable manifold is the threshold — start left, decay; start right, spike to m≈1.</li>
+</ul>
+<h3>Limit cycles, index, anode-break, refractory — one story</h3>
+<ul>
+<li><b>Limit cycle:</b> isolated closed orbit, fixed amplitude (unlike linear rings which scale with start). Needs circular arrow flow. <b>Index rule:</b> limit cycle index must be +1 → must enclose odd equilibria (e.g. 2 nodes + 1 saddle). <b>Poincaré–Bendixson (2D only):</b> trapped trajectory in ring R with no equilibria inside R → limit cycle.</li>
+<li><b>Anode-break:</b> hold hyperpolarized (−2.8 µA/cm², 0–40 ms) → h↑ (more Na ready), n↓ (less K holding). Release → nullclines shift, rest equilibrium gone → must spike. Same V–m geometry, different start.</li>
+<li><b>Relative refractory in phase language:</b> mid-spike h∞ drops 0.6→0.1 → V-null moves, saddle/threshold shifts up → need bigger V to fire.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_4_Notes_p0_x123.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W4: limit-cycle spiral + closed orbit. Check fixed amplitude vs linear scaling.</figcaption></figure>
+<figure><img loading="lazy" src="story_images/Week_4_Notes_p10_x59.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W4: V–m nullclines, rest/saddle, threshold manifold.</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> 5 eigenvalue cases; index +1/−1/0; why limit cycle needs odd points; PB conditions (closed bounded R, C¹ field, no equilibria in R, trapped trajectory); anode-break h/n mechanism.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — eigenvalues without fear</h4>Trace = λ1+λ2, Det = λ1·λ2. Det&lt;0 → saddle. Det&gt;0 + Trace&lt;0 → stable (node/spiral). Det&gt;0 + Trace&gt;0 → unstable. Complex when Trace²&lt;4·Det. You only need signs, not numbers.</aside><aside class="fullform"><h4>Full forms — Ch.4</h4><dl>
+<dt>Quiver / nullcline / fixed point</dt><dd>Arrow field / zero-velocity curve / crossing. Job: predict without simulating.</dd>
+<dt>Index +1/−1/0</dt><dd>Winding of arrows around curve. Node/spiral +1, saddle −1. Trap: cycle must sum to +1.</dd>
+<dt>Jacobian \(J\)</dt><dd>Local linear slopes. Job: eigenvalues classify the point.</dd>
+</dl></aside></div></div>
+<p class="bridge">Single cells understood. But cortex never gets one clean spike — it gets jitter. Time to think statistically.</p>
+
+<h2 id="c5">5. The noise</h2>
+<div class="hook">Same stimulus, different spike times every trial. Either the brain is sloppy, or the slop <i>is</i> the code. Assume the latter and count.</div>
+<div class="withside"><div>
+<ul>
+<li><b>Random variable:</b> outcome ω → number X(ω). Discrete→PMF (Σf=1), continuous→PDF (area = P(a&lt;X&lt;b)). Realization x=X(ω).</li>
+<li><b>Poisson (homogeneous):</b> independent bins, P(1 spike)≈λΔ, max 1/bin if Δ tiny. Captures irregularity; fails refractoriness/history (needs conditional/H bins).</li>
+<li><b>PSTH:</b> repeat stimulus K times, bin (e.g. 10 ms), count nK(t,t+Δt), divide by K → rate vs time. Peak = when cell cares.</li>
+<li><b>Correlations:</b> auto = signal vs delayed self; cross = signal A vs delayed B. Bins 0/1, P(qi=1)=λΔi. STA later is just normalized cross-correlation.</li>
+<li><b>Receptive field:</b> sensory patch that moves firing. Parameterizable (vision: orientation/freq, audio: freq/pitch) vs hard (taste/smell). Spontaneous activity = baseline firing with variable gaps (Crochet/Petersen data).</li>
+</ul>
+
+<div class="exam"><b>Exam cue:</b> PMF vs PDF properties; Poisson bin assumption; PSTH steps; auto vs cross; what STA estimates (preview).</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — probability minimum</h4>Mean = average, variance = spread. Independent = multiply. Conditional = given history. Poisson = rare independent events. If you get these, Ch.6–7 are readable.</aside><aside class="fullform"><h4>Full forms — Ch.5 (start detail rail here)</h4><dl>
+<dt>PMF \(f(x)=P(X=x)\)</dt><dd>Discrete probs sum to 1. Trap: PMF value <i>is</i> prob; PDF value is <i>not</i> (area is).</dd>
+<dt>PDF \(f\)</dt><dd>\(P(a&lt;X&lt;b)=\int_a^b f\). Job: continuous voltages/rates.</dd>
+<dt>Homogeneous Poisson</dt><dd>Constant \(\lambda\), independent bins. Job: null model of irregularity. Fails: refractoriness/history.</dd>
+<dt>PSTH</dt><dd>Peri-stimulus histogram. Job: see <i>when</i> cell cares. Needs many repeats + small bins.</dd>
+<dt>Cross-correlation \(R_{PX}\)</dt><dd>Similarity vs lag. Job: STA is normalized version (next).</dd>
+<dt>Receptive field</dt><dd>Sensory region driving cell. Parameterizable (orientation/freq) vs hard (taste/smell).</dd>
+</dl></aside></div></div>
+<p class="bridge">Noise described. Now: what stimulus feature makes this noisy cell fire more?</p>
+
+<h2 id="c6">6. The code</h2>
+<div class="hook">Play white noise, collect spikes, average the stimuli that preceded them. The average looks like the cell's favourite pattern. That average, scaled, <i>is</i> the linear filter.</div>
+<div class="withside"><div>
+<ul>
+<li><b>STA:</b> (1/N)Σ X(ti−τ). Cross-correlation RpX≈RqX. <b>Impulse response = scaled STA.</b> Works cleanly for Gaussian white noise, mean 0.</li>
+<li><b>LN:</b> linear filter → static nonlinearity λ(y)=Σ ak·y^k (arbitrary). Price's theorem handles Gaussian moments (g(x,y)=x·λ(y)). Your W6 derivation is this step.</li>
+<li><b>Rate fit:</b> r(t) from s(t); MSE = mean((rest−ract)²). Reconstruction needs <i>future</i> rates (M bins after t) because spikes lag stimulus.</li>
+<li><b>Information (Cover & Thomas Ch.2):</b> H=uncertainty, joint/conditional, MI = reduction in uncertainty, <b>data-processing inequality:</b> post-processing can't create info. Box summary p.40 is exam gold.</li>
+</ul>
+
+<div class="stumble"><b>You might stumble:</b> STA ≠ receptive field when stimulus is non-Gaussian or cell is strongly nonlinear — then you need MID (Ch.6 end) or STRF (Ch.8). Linear step is a lens, not truth.</div>
+<div class="exam"><b>Exam cue:</b> STA formula + scaling; LN polynomial; why reconstruction uses future; entropy/MI/DPI statements.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — LTI in one line</h4>Linear time-invariant = scaled+shifted inputs give scaled+shifted outputs. Then output = convolution with impulse response. STA estimates that response from spikes.</aside><aside class="fullform"><h4>Full forms — Ch.6</h4><dl>
+<dt>STA</dt><dd>Spike-triggered average. Job: linear RF from white noise. Trap: fails for non-Gaussian / strong nonlinear → use MID/STRF.</dd>
+<dt>LN model</dt><dd>Linear + \(\lambda(y)\). Job: keep STA but allow threshold/saturation. Price's theorem handles Gaussian moments.</dd>
+<dt>Rate \(r(t)\) vs spikes</dt><dd>Rate = averaged spikes. Job: MSE fit on rates, decode stimulus from rate vector.</dd>
+<dt>Entropy \(H\) / MI</dt><dd>\(H\) = uncertainty; MI = cut. Trap: MI symmetric, KL not.</dd>
+</dl></aside></div></div>
+<p class="bridge">We can describe what drives a cell. But can we tell two stimuli apart from its counts?</p>
+
+<h2 id="c7">7. How separable?</h2>
+<div class="hook">Two stimuli, two Poisson clouds of spike counts. If clouds overlap, you guess. KL tells you how much they overlap; spike distances tell you trial-by-trial.</div>
+<div class="withside"><div>
+<ul>
+<li><b>Discrimination cartoon:</b> S1,S2 → Poisson counts → high rate + fixed window ≈ Gaussian. Separation = d′-like (Δmean/σ). Correlation ≠ causation warning from notes.</li>
+<li><b>KL final forms:</b> discrete D=Σp log(p/q); Gaussian equal-σ: ∝(Δμ)² (your notes' α(d1)²). Per-bin for M bins: p⃗=[p1..pM], q⃗=[q1..qM]; if bins independent sum DKL(i); if history matters (H bins back) use conditional; if bins hold 0..k spikes, DKL(i)=Σr pi(r)log(pi(r)/qi(r)).</li>
+<li><b>Spike distances → confusion:</b> Dij matrix (N stimuli × M repeats), Lij = mean distance of train i to others' repeats, classify to nearest → P(S,Ŝ) table. Diagonal = correct.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_7_-_Notes_p0_x11.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W7: two-rate Gaussians → KL idea. Shade overlap = errors.</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> when Poisson→Gaussian; KL discrete + Gaussian forms; independent vs conditional bins; how confusion matrix is built.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — KL intuition</h4>KL(p||q) = extra surprise using q when truth is p. Not symmetric. Zero = identical. Large = easy to tell apart. Log base only scales units (bits vs nats).</aside><aside class="fullform"><h4>Full forms — Ch.7</h4><dl>
+<dt>\(d'\) (d-prime)</dt><dd>\(\Delta\)mean/σ. Job: quick separability. Trap: correlation ≠ causation (notes warning).</dd>
+<dt>Joint \([\vec{p},\vec{q}]\)</dt><dd>M-bin probs for S1/S2. Job: KL input. Independent = multiply; else conditional.</dd>
+<dt>Spike distance \(L_{ij}\)</dt><dd>Mean distance of train i to others. Job: nearest-stimulus classifier → confusion table.</dd>
+</dl></aside></div></div>
+<p class="bridge">Separation measured. Now invert: given spikes, what was the stimulus — and how sure can we be?</p>
+
+<h2 id="c8">8. Guessing back</h2>
+<div class="hook">A monkey watches moving dots and bets left/right. Its neurons are noisy, yet from one cell you can decode motion surprisingly well — if you pick the threshold smartly (ROC) and know the theoretical floor (Cramér–Rao).</div>
+<div class="withside"><div>
+<ul>
+<li><b>Likelihood/score/Fisher:</b> L=p(r|s). Score = ∂ln p/∂s (slope). Bias b=⟨ŝ⟩−s. Fisher I=⟨score²⟩. <b>Cramér–Rao (unbiased):</b> Var(ŝ) ≥ 1/I. Sharp tuning = high I = low floor.</li>
+<li><b>Britten 2AFC + ROC:</b> rule: r&gt;threshold → “+” else “−”. Vary threshold → P(correct) vs false-alarm → ROC. Area under ROC = P(correct). Higher coherence → bigger area. Read Dayan & Abbott pp.87–94, 107–111 (your notes' pointer).</li>
+<li><b>STRF rapid plasticity (Fritz/Shamma ferret):</b> TORC + tones, lick-stop avoidance (shock). Passive STRF vs behavioral STRF: excitatory boost / inhibitory sideband weaken near target. A1 changes <i>during</i> task — code is not fixed.</li>
+<li><b>Single-cell encoding preview:</b> operant data shows task sculpts tuning, motivating Ch.9–10 plasticity.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_8_-_Notes_p1_x11.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W8: likelihood→bias/variance→Fisher→CR bound chain.</figcaption></figure>
+<figure><img loading="lazy" src="story_images/Week_8_-_Notes_p3_x22.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W8: ROC/threshold and STRF task change.</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> definitions (likelihood/score/bias/Fisher/CR); ROC construction + AUC meaning; passive vs behavioral STRF result.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — Bayes in one line</h4>Posterior ∝ Likelihood × Prior. Decoding picks s maximizing this (or thresholding it). ROC sweeps the decision cutoff; Fisher tells best possible sharpness.</aside><aside class="fullform"><h4>Full forms — Ch.8</h4><dl>
+<dt>Likelihood \(p(r|s)\)</dt><dd>Prob of response given stimulus. Job: decode by max. Trap: likelihood ≠ posterior (needs prior).</dd>
+<dt>Score</dt><dd>Slope of log-likelihood. Job: Fisher input. Steep = informative.</dd>
+<dt>Bias / variance</dt><dd>Mean error / spread. Small variance = sharp tuning.</dd>
+<dt>2AFC + ROC</dt><dd>Two-choice task + threshold sweep. Job: Britten monkey coherence → bigger AUC = easier.</dd>
+<dt>STRF</dt><dd>Spectro-temporal RF (auditory). Passive = idle; behavioral = doing task (plastic, enhanced).</dd>
+</dl></aside></div></div>
+<p class="bridge">Decoding assumes fixed wiring. Real wiring moves in seconds to years. How?</p>
+
+<h2 id="c9">9. The wiring changes I</h2>
+<div class="hook">Every spike ends at a synapse that decides how much to care next time. Change the care, change the brain.</div>
+<div class="withside"><div>
+<ul>
+<li><b>Transmission in 6:</b> AP arrives → Ca²⁺ in → vesicles fuse → transmitter diffuses → binds (ionotropic=fast channel vs metabotropic/GPCR=slow cascade) → PSP (EPSP depolarize / IPSP hyperpolarize; currents EPSC/IPSC) → clear by reuptake/enzymes. NMDA needs Glu <i>plus</i> depolarization (Mg block out) → Ca in; AMPA is fast Na.</li>
+<li><b>Strength knobs:</b> pre: more vesicles, more Ca, better release proteins, less reuptake. Post: bigger spine area, more receptors (upregulate), more sensitive (phosphorylation), more PSD-95/scaffold.</li>
+<li><b>Structural:</b> new synapses, branching, map expansion (musicians' digits), tonotopy shift if exposed in critical period, monocular deprivation → open-eye takes cortex (amblyopia risk).</li>
+<li><b>STP models:</b> 3-state (Recovered→Effective→Inactive, fixed resource) + linear kernel on Poisson train: depression kernel dips then recovers (lower Vm, harder to spike); facilitation pushes up. y(t) operated by kernel.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_9_-_Notes_p4_x16.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W9: NMDA Mg-block release — the coincidence detector behind LTP.</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> 6 transmission steps; ionotropic vs GPCR speed; NMDA double requirement; EPSP/IPSP currents; 3-state STP + kernel sign.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — NMDA = AND gate</h4>AMPA depolarizes (A), Glu binds NMDA (B). Only A+B expels Mg²⁺ → Ca²⁺ enters → plasticity cascade. This AND is why “fire together” matters next.</aside><aside class="fullform"><h4>Full forms — Ch.9</h4><dl>
+<dt>EPSP/IPSP vs EPSC/IPSC</dt><dd>P = voltage, C = current. E = depolarize (Na/Ca in), I = hyperpolarize (Cl in / K out). Trap: current causes voltage.</dd>
+<dt>Ionotropic (AMPA/NMDA/GABA-A)</dt><dd>Ligand-gated channel, ms. Job: fast signalling.</dd>
+<dt>Metabotropic/GPCR (GABA-B/mAChR)</dt><dd>Cascade, slow, long. Job: modulation.</dd>
+<dt>R/E/I</dt><dd>Recovered/Effective/Inactive vesicle pools. Job: depression = deplete R.</dd>
+<dt>Critical period / tonotopy</dt><dd>Early window; expose frequency → over-represent; close eye → open-eye takes cortex.</dd>
+</dl></aside></div></div>
+<p class="bridge">Short changes fade. What makes them last a lifetime?</p>
+
+<h2 id="c10">10. The wiring changes II</h2>
+<div class="hook">Pair pre with post and the synapse grows. Reverse the order by 20 ms and it shrinks. Timing is the teacher.</div>
+<div class="withside"><div>
+<ul>
+<li><b>LTP/LTD recipes:</b> HFS/tetanic 100 Hz bursts → LTP (more AMPA, PSD-95, spine, proteins); LFS minutes or decorrelated → LTD. Both via NMDA-Ca.</li>
+<li><b>Hebb:</b> correlated ↑, decorrelated ↓. “Fire together wire together.” Non/anti-Hebbian exist.</li>
+<li><b>STDP window:</b> pre→post (positive Δt) = potentiate; post→pre = depress; magnitude + window shape are malleable (modulation).</li>
+<li><b>Rate models:</b> \(v \approx w\cdot u\) (slow plasticity vs fast activity). Basic Hebb \(\Delta w \propto v\,u\) unstable (Dayan & Abbott p.286 proof: \(Q=\langle uu^T\rangle\) positive feedback blows up). Fix by <b>normalization</b>: Oja, <b>BCM</b> sliding threshold (LTP when post above threshold, LTD below; threshold slides with history), synaptic scaling.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_10_-_Notes_p4_x22.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W10: STDP window — sign flips with order. Draw axes with Δt=0 center.</figcaption></figure>
+<figure><img loading="lazy" src="story_images/Week_10_-_Notes_p5_x28.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W10: Hebb → averaged → Q matrix → need BCM/normalization.</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> HFS vs LFS protocols; STDP order rule; why basic Hebb unstable (Q); BCM sliding threshold idea.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — stability in one line</h4>Positive feedback without cap explodes. Biology caps by weight sums (normalization), sliding thresholds (BCM), and scaling. Math needs the same caps.</aside><aside class="fullform"><h4>Full forms — Ch.10</h4><dl>
+<dt>HFS (100 Hz bursts) / LFS (minutes)</dt><dd>Induce LTP / LTD in slice. Trap: frequency + pairing both matter, not frequency alone.</dd>
+<dt>\(v=w\cdot u\)</dt><dd>Steady rate from weights. Job: slow plasticity on fast activity.</dd>
+<dt>\(Q=\langle uu^T\rangle\)</dt><dd>Input correlations. Job: averaged Hebb grows along Q → blow-up → must normalize.</dd>
+<dt>BCM threshold \(\theta\)</dt><dd>Slides with history. Above → LTP, below → LTD. Job: stability + selectivity.</dd>
+</dl></aside></div></div>
+<p class="bridge">Wiring learns. But perception also rescales in seconds (adapt) and with goals (attend), and builds itself early (develop).</p>
+
+<h2 id="c11">11. Gain control</h2>
+<div class="hook">Same ear, different world: novel tones pop, repeats fade; attend somewhere and noise correlations drop so the population tells more truth.</div>
+<div class="withside"><div>
+<ul>
+<li><b>Adaptation/SSA:</b> decline to repeats, specific to stimulus. Oddball f1/f2 (D=deviant,S=standard): <b>CSI=[f1(D)+f2(D)−f1(S)−f2(S)]/[sum]</b>. +1=all-deviant, −1=all-standard. MMN = EEG oddball blip.</li>
+<li><b>Attention:</b> single cell = boost attended, suppress else. <b>Knudsen loop:</b> saliency filter → representation → top-down competition → working memory → action → new input. <b>Cohen & Maunsell V4:</b> less noise correlation = better orientation-change detection. <b>Cholinergic (ChR2) mouse:</b> decorrelated within trial + reliable across trials = better coding.</li>
+<li><b>Development (SPNs):</b> subplate first-born, thalamus→L4 bridge. Kill SPNs → no ocular columns, no L4 inhibition, tonotopy wrong. Over-expose a frequency early → over-represent it.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_11_-_Notes_p0_x8.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W11: oddball/CSI paradigm. Compute CSI once by hand.</figcaption></figure>
+<figure><img loading="lazy" src="story_images/Week_11_-_Notes_p3_x20.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W11: attention decorrelation idea (Cohen & Maunsell / ChR2).</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> CSI formula + ±1 meaning; MMN; Knudsen loop steps; why lower noise correlation helps; SPN role.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — correlation vs information</h4>Shared noise = redundancy. Less shared noise = neurons carry different pieces = population Fisher up. Attention as decorrelator is the bridge from Ch.8 decoding to behavior.</aside><aside class="fullform"><h4>Full forms — Ch.11</h4><dl>
+<dt>Oddball f1/f2, D/S</dt><dd>Two freqs swap standard/deviant. Job: test specificity. Trap: CSI needs both blocks.</dd>
+<dt>Knudsen framework</dt><dd>Saliency filter → competition → WM. Job: attention as selection loop.</dd>
+<dt>ChR2/cholinergic</dt><dd>Light drives ACh → V4 decorrelates + stabilizes. Job: causal attention test.</dd>
+<dt>SPN/subplate</dt><dd>Early thalamus→L4 scaffold. Job: build columns/tonotopy before real cortex ready.</dd>
+</dl></aside></div></div>
+<p class="bridge">If brains adapt, attend, and develop — what wiring <i>should</i> evolution pick for natural sights and sounds?</p>
+
+<h2 id="c12">12. What should the code be?</h2>
+<div class="hook">Olshausen and Field asked: what basis makes images both accurate and sparse? Answer looked like V1 simple cells. No one programmed them — efficiency did.</div>
+<div class="withside"><div>
+<ul>
+<li><b>Vision (Olshausen–Field 1996, 3 pp):</b> I≈Σ φi·si. PCA (Gaussian) fails on natural images. Minimize <b>error + sparseness</b> → Gabor-like simple cells. Final form: cost = reconstruction error + λ·sparsity penalty.</li>
+<li><b>Hearing (Smith–Lewicki 2006):</b> signal = Σ kernels∗coeffs via <b>matching pursuit</b> (greedy efficient). Learned kernels = time-localized, narrowband, asymmetric attack/decay = cat revcor filters. Speech fits mammalian capacity.</li>
+<li><b>Development proof:</b> before ear-canal-opening (ECO) SPNs are stronger deviant detectors (CSI); after ECO L4 takes over. SSA is innate then handed off.</li>
+<li><b>Big problems (your L60):</b> how do efficient codes emerge with spikes + plasticity + attention + development together? That is the course's closing question.</li>
+</ul>
+<figure><img loading="lazy" src="story_images/Week_12_-_Notes_p1_x10.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W12: sparse cost → simple-cell fields. Compare PCA blobs vs sparse Gabors.</figcaption></figure>
+<figure><img loading="lazy" src="story_images/Week_12_-_Notes_p10_x66.png" onerror="this.closest('figure').style.display='none'"><figcaption>From notes W12: auditory kernels vs revcor — same shape, different origin.</figcaption></figure>
+<div class="exam"><b>Exam cue:</b> why PCA fails (non-Gaussian); two-term cost; matching pursuit idea; revcor match; CSI switch at ECO.</div>
+</div>
+<div class="rail"><aside class="sidebar"><h4>Sidebar — efficient coding slogan</h4>Keep info, spend little: minimize error, maximize sparseness / minimize spikes. V1 and cochlea look like solutions, not accidents.</aside><aside class="fullform"><h4>Full forms — Ch.12</h4><dl>
+<dt>Basis \(\phi_i\) / coeffs \(s_i\)</dt><dd>Dictionary + activations. Job: efficient rewrite of image/sound.</dd>
+<dt>Matching pursuit</dt><dd>Greedy pick best kernel, subtract, repeat. Job: sparse sound code.</dd>
+<dt>Revcor filter</dt><dd>Measured impulse response. Match = theory wins.</dd>
+<dt>ECO</dt><dd>Ear-canal opening. Before: SPN detects; after: L4 does.</dd>
+</dl></aside></div></div>
+
+<h2 id="cheat">20 ideas if you remember nothing else</h2>
+<ol>
+<li>Cajal: separate neurons, 100B, 10k fan-in/out.</li>
+<li>Layer 4 = input; chemical (Glu/GABA) vs gap.</li>
+<li>AP: −70→threshold→+40→K out→refractory (absolute=Na inactivated).</li>
+<li>Nernst: balance diffusion vs voltage; Na +40, K −85.</li>
+<li>LIF: C·dV/dt=−(V−EL)/R+Isyn; no channels = limitation.</li>
+<li>HH: gK=n⁴, gNa=m³h; τm&lt;τh&lt;τn.</li>
+<li>MLE: Ca for Na, one w; 2D toy for geometry.</li>
+<li>Nullclines cross = fixed; Jacobian eigenvalues = type.</li>
+<li>Limit cycle = isolated fixed-amplitude orbit; index +1; PB for 2D.</li>
+<li>Anode-break = h↑n↓ after hyperpolarization → must spike.</li>
+<li>Poisson + PSTH (K repeats, bins) = rate.</li>
+<li>STA = scaled impulse response (white noise).</li>
+<li>MI + DPI (Cover Ch.2 box).</li>
+<li>KL = separation; sum per independent bin.</li>
+<li>Fisher I=⟨score²⟩; Var≥1/I; ROC AUC=P(correct).</li>
+<li>STRF task plasticity: behavior reshapes A1.</li>
+<li>NMDA = Glu AND depolarization → Ca.</li>
+<li>STDP: pre→post=LTP, post→pre=LTD.</li>
+<li>Hebb unstable (Q) → BCM/normalization.</li>
+<li>CSI oddball; attention=decorrelate; sparse=min error+max sparseness.</li>
+</ol>
+<p class="meta">Built from your 12 PDFs. Images are crops from those PDFs (story_images/). For exam, redraw: HH gates, V–m nullclines, PSTH, STA, ROC, STDP window, NMDA AND, CSI.</p>
+<script>window.addEventListener("load",()=>{if(window.MathJax&&MathJax.typesetPromise){MathJax.typesetPromise();}});</script><script>
+const GLOSSARY = {"terms": {"soma": "The cell body \u2014 the neuron's housekeeping hub holding the nucleus. Think of it as the factory office: it doesn't compute much, but without it the cell dies. Dendrites bring mail in, the axon carries orders out from here.", "dendrite": "Branched input wires fanning out of the soma. One neuron can collect from ~10,000 others here. Intuition: like antennae \u2014 more branches, more conversations overheard. Exam trap: signals here are graded (not all-or-none spikes).", "axon": "The single output cable carrying spikes to terminals, sometimes a meter long (e.g. leg motor neurons). Intuition: a telegraph wire \u2014 spikes travel one way because the wake behind them is refractory.", "synapse": "The gap where one neuron talks to the next \u2014 terminal bouton, cleft, and postsynaptic patch. Intuition: a handshake across a gap, never touching. Everything learnable in this course lives here.", "glutamate": "The brain's main excitatory transmitter \u2014 pushes the next cell toward spiking. Intuition: the gas pedal, used at most fast excitatory synapses (AMPA/NMDA receptors).", "GABA": "The brain's main inhibitory transmitter \u2014 pulls cells away from spiking. Intuition: the brake. Loss of GABA \u2192 runaway excitation (seizures).", "dopamine": "Modulator for reward, motivation, motor control. Intuition: not fast mail but a memo saying 'remember what just happened, it mattered.' Parkinson's = losing dopamine cells.", "serotonin": "Modulator of mood, sleep, appetite. Intuition: slow background music setting brain state, not the melody.", "acetylcholine": "Fast at muscles, modulatory in brain (attention, learning). Intuition: the highlighter \u2014 cholinergic input tells cortex 'this input matters now' (see Ch.11 attention).", "norepinephrine": "Arousal/alertness/stress modulator (a.k.a. noradrenaline). Intuition: the alarm bell \u2014 same event feels different when this is high.", "thalamus": "Deep relay station; nearly all sensory input stops here before cortex. Layer 4 is its main cortical mailbox. Intuition: the post office sorting mail to cortical addresses.", "corpus callosum": "Fiber bridge between hemispheres. Intuition: the hotline letting left and right halves share notes; cut it and each half works alone.", "sulcus": "A groove on the brain surface (plural sulci). Intuition: valleys that pack more cortex into the skull. Central sulcus (Rolando) splits motor (front) from sensory (behind).", "gyrus": "A ridge between grooves (plural gyri). Same packing logic as sulci \u2014 hills between valleys.", "fissure": "A very deep groove dividing big regions (e.g. lateral fissure separates temporal lobe). Think county borders vs city streets (sulci).", "cerebrum": "The big top part: two hemispheres for perception, thought, action. Frontal plans, parietal feels space, temporal hears/remembers, occipital sees.", "cerebellum": "Small back brain with most neurons; fine-tunes movement, balance, timing. Intuition: the quality-control engineer, not the boss.", "medulla": "Lowest brainstem, continuous with spinal cord; runs breathing, heart rate, blood pressure. Damage here kills \u2014 no higher thought without it.", "pons": "Bridge above medulla; sleep, breathing rhythm, and a relay between cerebrum and cerebellum.", "transduction": "Converting outside energy (light, sound, touch) into electrical current the nervous system reads. Sense organs are transducers \u2014 the first translation step before any computation.", "patch clamp": "Glass pipette sealing a membrane patch to record single ion-channel currents. Intuition: eavesdropping on one door in a stadium wall. This data fit the HH gates.", "resting potential": "Steady voltage (~\u221270 mV) with no input \u2014 inside negative. Set mostly by K\u207a leak. Every spike is a brief excursion from here and back.", "depolarization": "Membrane voltage going less negative (toward zero and up). Excitatory input does this. Reach threshold and the spike's positive feedback takes over.", "hyperpolarization": "Going more negative than rest. Inhibitory input or K\u207a outflow does this. Paradoxically can prime the next spike (anode-break) by resetting gates.", "repolarization": "Coming back down to rest after the peak \u2014 K\u207a outflow plus Na\u207a shutoff. The falling limb of the spike.", "threshold": "Voltage where Na\u207a influx outruns leak+K\u207a \u2014 positive feedback ignites. Not a fixed number: shifts with h and n (that's why refractory and anode-break happen).", "absolute refractory period": "~1 ms after spike start when no stimulus, however strong, can fire again \u2014 Na\u207a channels are inactivated. Guarantees spikes are discrete and travel one way.", "relative refractory period": "Following window where only a bigger-than-normal kick fires \u2014 some Na\u207a reset but K\u207a still open. Intuition: the cell is tired, shouts only if you yell.", "Nernst potential": "Voltage exactly balancing one ion's diffusion: E=(RT/zF)\u00b7ln(Cout/Cin). At E_ion that ion stops flowing net. Na \u2248+40 mV, K \u2248\u221285 mV \u2014 the two batteries fighting over Vm.", "voltage clamp": "Holding Vm fixed with injected current to measure the ionic current needed \u2014 isolates channel kinetics. Block Na \u2192 see K alone and vice versa (your W3 traces).", "LIF model": "Leaky integrate-and-fire: one RC point, no gates; hit threshold \u2192 declare spike \u2192 reset. Great for networks, lies about shape: real spikes need voltage-gated channels, refractoriness, inactivation.", "isopotential": "Same voltage everywhere in a piece. Point models assume the whole cell is one; compartmental models chain many such pieces with axial coupling to get space (dendrite vs soma differences).", "compartmental model": "Splitting the neuron into coupled isopotential chunks, each with own Vm(x). Cost: many ODEs. Payoff: dendritic filtering, backpropagating spikes, real geometry.", "Hodgkin\u2013Huxley model": "Four-variable spike machine (V,m,h,n) fit to squid axon clamp data. m\u00b3h = Na must open 3 fast gates while 1 slow gate hasn't shut; n\u2074 = K needs 4 slow gates. Powers = coincidence probabilities, not magic.", "gating variable": "Number 0\u20131 = fraction of a gate type open (m,h,n). Each relaxes toward voltage-dependent target x\u221e(V) with time constant \u03c4x(V). Fast m, medium h, slow n \u2014 that ordering makes the spike.", "inactivation gate": "The h gate: closes Na channels after they open, even if voltage stays high. Intuition: a self-closing door \u2014 makes spikes brief and creates refractoriness.", "Morris\u2013Lecar model": "Two-variable HH cousin: Ca\u00b2\u207a (fast, no inactivation) + one K variable w, with temperature factor \u03c6. Keeps threshold + oscillation geometry with 2 ODEs \u2014 the course's phase-plane toy.", "nullcline": "Curve where one derivative is zero (V-null: dV/dt=0; w-null: dw/dt=0). Crossings are equilibria. Shift a nullcline (neuromodulation, h/n change) and you create or kill fixed points \u2014 that's anode-break and threshold shifts.", "quiver plot": "Arrow field of (dV/dt,dw/dt) at each state. Follow arrows = trajectory. Still arrows (zero length) = fixed points; arrows circling = possible rhythm.", "fixed point": "State with zero velocity \u2014 system sits still there unless kicked. Resting Vm is (usually) a stable one. Limit cycles orbit around unstable ones.", "Jacobian": "Matrix of local slopes (partial derivatives) at a fixed point. Its eigenvalues classify: both negative \u2192 sink; both positive \u2192 source; mixed \u2192 saddle; complex \u2192 spiral. You only ever need signs.", "eigenvalue": "Growth/decay rate along an eigenvector direction. Negative = shrink back, positive = run away, imaginary part = rotate. Saddle = one of each.", "stable node": "All nearby trajectories slide straight in (both eigenvalues real negative). Your resting state should be one \u2014 small noise dies out.", "unstable node": "All nearby trajectories leave (both positive). Useless as rest, useful inside limit cycles.", "spiral": "Complex eigenvalues: trajectories curl. Stable spiral (negative real part) rings down; unstable rings up into a limit cycle.", "saddle point": "One direction in, one out. Its incoming manifold is literally the spike threshold in V\u2013m HH: start left, decay; start right, fire.", "limit cycle": "Isolated closed orbit with fixed amplitude \u2014 the repeat button. Unlike linear rings, size is the system's own, not the kick's. Needs index +1 enclosed equilibria.", "Poincar\u00e9\u2013Bendixson theorem": "2D-only guarantee: a trajectory trapped forever in a ring region with no equilibria must be (or approach) a limit cycle. The course's sufficiency certificate for rhythms.", "anode-break excitation": "Spike fired on release of hyperpolarization: hold negative \u2192 h rises, n falls \u2192 rest equilibrium vanishes on release \u2192 must spike. Proof threshold is dynamic, not a line.", "random variable": "Outcome \u03c9 mapped to a number X(\u03c9). Spike counts per trial are the running example. Discrete \u2192 PMF; continuous \u2192 PDF.", "PMF": "Probability mass function: f(x)=P(X=x), sums to 1. For counts (0,1,2 spikes). Value IS a probability.", "PDF": "Probability density function: area under it is probability. Value is NOT a probability (can exceed 1). Trap the notes test.", "Poisson process": "Rare independent events at rate \u03bb: P(1 spike in \u0394)\u2248\u03bb\u0394. Null model of irregular firing. Fails where history matters (refractoriness) \u2014 then use conditional bins.", "PSTH": "Peri-stimulus time histogram: repeat stimulus K times, bin spikes, average \u2192 firing rate vs time. Peak = when the cell cares. Needs many repeats and small-but-not-tiny bins.", "autocorrelation": "Signal vs its delayed self \u2014 detects rhythms/repeats in one spike train.", "cross-correlation": "Signal A vs delayed signal B \u2014 detects who follows whom. STA is essentially spike\u2013stimulus cross-correlation, normalized.", "receptive field": "Sensory patch driving a cell (visual orientation spot, auditory frequency band). Parameterizable (orientation, pitch) vs hard (taste/smell). Spontaneous activity = baseline firing with no stimulus.", "spontaneous activity": "Firing with zero intentional stimulus \u2014 the brain idles loudly. Intervals are highly variable (Crochet/Petersen data). Decoding must beat this background.", "STA": "Spike-triggered average: mean stimulus before each spike. With white-noise input, scaled STA equals the linear filter (impulse response). Fails for non-Gaussian stimuli or strong nonlinearities \u2014 then MID/STRF.", "LN model": "Linear filter followed by static nonlinearity \u03bb(y)=\u03a3a\u2096y\u1d4f. Keeps STA's filter, adds threshold/saturation. Price's theorem grinds the Gaussian math.", "Price's theorem": "Formula for Gaussian moments through nonlinearities \u2014 lets the W6 derivation connect STA, covariance, and polynomial \u03bb(y). Take it as a tool, not doctrine.", "reconstruction": "Guessing the stimulus back from rates \u2014 needs future rate bins because spikes lag the stimulus. Mirror of decoding (Ch.8) but from the coding side.", "entropy": "H = uncertainty in bits/nats. Uniform = max. Sharp prediction = low H.", "mutual information": "MI = uncertainty removed about stimulus by seeing response. Symmetric. Data-processing inequality: no post-processing creates MI (Cover Ch.2 box).", "KL divergence": "D_KL(p\u2016q) = extra surprise using q when truth is p. Zero = identical; asymmetric (order matters). Gaussian equal-variance case grows with (\u0394mean)\u00b2. Per-bin sum when bins independent; conditional when history matters.", "d-prime": "d\u2032 \u2248 \u0394mean/\u03c3 \u2014 quick separability score for two Gaussian response clouds. Bigger = fewer errors. Correlation \u2260 causation warning attached in notes.", "confusion matrix": "Table P(S,\u015c): true stimulus rows vs decoded columns. Diagonal = correct. Built from spike-distance nearest-neighbor classification over repeats.", "spike distance": "Number for how different two spike trains are (timing + count). Mean within-stimulus vs across-stimulus distances drive the L_ij classifier in W7.", "likelihood": "p(r|s): probability of response given stimulus. Decoding maximizes this (\u00d7 prior = posterior). Steep likelihood = informative neuron.", "score function": "Slope of log-likelihood, \u2202ln p/\u2202s. Its mean square is Fisher information. Big slope = tiny stimulus change moves response odds a lot.", "Fisher information": "I = \u27e8score\u00b2\u27e9. Sharpness meter. Cram\u00e9r\u2013Rao: unbiased estimator variance \u2265 1/I. Narrow tuning \u2192 high I \u2192 precise code.", "Cram\u00e9r\u2013Rao bound": "Theoretical floor on estimator variance (unbiased): can't beat 1/Fisher. Tells whether the monkey's performance is near-optimal or sloppy.", "bias": "Mean estimate minus truth. Zero bias + small variance = dream decoder. Real neurons trade both.", "2AFC task": "Two-alternative forced choice: monkey must pick '+' or '\u2212' motion coherence (Britten). Threshold rule on spike count; coherence up \u2192 easier \u2192 bigger ROC area.", "ROC curve": "Sweep the decision threshold: plot P(correct) vs false alarms. Area under curve = overall decodability. Better coherence \u2192 fatter curve.", "STRF": "Spectro-temporal receptive field: auditory neuron's time\u2013frequency fingerprint (which tones excite/inhibit, sustained vs adapting). Passive (idle) vs behavioral (doing task) \u2014 Fritz/Shamma ferrets show it reshapes during behavior.", "TORC": "Broadband noise-like stimulus ensembles for mapping auditory STRFs, paired with pure-tone targets in the ferret avoidance task (stop licking on tone or get shocked).", "ionotropic receptor": "Ligand-gated channel: transmitter binds \u2192 pore opens in milliseconds (AMPA, NMDA, GABA-A, nicotinic). Fast mail.", "metabotropic receptor": "G-protein cascade receptor (GABA-B, muscarinic): slow onset, long effect. The memo system, not the telegram.", "NMDA receptor": "Glutamate channel needing BOTH glutamate AND depolarization (Mg\u00b2\u207a block expelled) \u2192 Ca\u00b2\u207a enters. The coincidence AND-gate behind LTP/STDP. AMPA gives the depolarization that unblocks it.", "AMPA receptor": "Fast Na\u207a glutamate channel: rapid depolarization, no Mg block. First responder; its work lets NMDA join.", "EPSP": "Excitatory postsynaptic potential: depolarizing voltage bump making spikes likelier. Current version: EPSC.", "IPSP": "Inhibitory postsynaptic potential: hyperpolarizing dip making spikes less likely. Current: IPSC.", "PSD-95": "Postsynaptic scaffold protein increased in LTP \u2014 more slots holding more AMPA receptors. Bigger spine + more scaffold = stronger synapse, physically.", "critical period": "Early window when experience wires cortex permanently (vision, tonotopy). Miss input \u2192 lasting deficit (amblyopia); overexpose \u2192 over-representation.", "tonotopy": "Ordered map of sound frequency across auditory cortex, like piano keys. Plastic in the critical period.", "monocular deprivation": "Closing one eye early: its cortical territory shrinks, open eye expands \u2192 lazy eye if uncorrected. Textbook critical-period proof.", "STP": "Short-term plasticity (seconds): 3-state vesicle pools Recovered\u2192Effective\u2192Inactive + linear kernel. Depression = deplete (push Vm down); facilitation = boost. Recovers by itself.", "LTP": "Long-term potentiation: lasting strength increase from HFS/tetanic 100 Hz pairings (pre + post depolarization). More AMPA/PSD-95/spine protein. Months to life.", "LTD": "Long-term depression: lasting decrease from prolonged LFS or decorrelated spikes. Same NMDA-Ca machinery, opposite outcome.", "Hebbian plasticity": "Correlated up, decorrelated down \u2014 'fire together, wire together' (Hebb 1949). Rate version \u0394w\u221dv\u00b7u blows up via input correlations Q, so biology adds caps. Anti-Hebbian synapses do the reverse.", "STDP": "Spike-timing-dependent plasticity: pre\u2192post (\u0394t>0) = LTP; post\u2192pre = LTP's mirror, LTD. Window magnitude/shape are modulable \u2014 timing teaches, context grades.", "BCM rule": "Sliding-threshold stabilizer: postsynaptic activity above moving threshold \u03b8 \u2192 LTP, below \u2192 LTD; \u03b8 itself tracks history. Fixes Hebb's explosion while keeping selectivity.", "synaptic normalization": "Capping total weight (Oja, scaling): if one input grows others shrink. Keeps Hebbian competition honest \u2014 without it Q's positive feedback explodes (Dayan & Abbott p.286).", "adaptation": "Fading to repeats (stimulus-specific). Quantified by oddball CSI. Saves energy for novelty \u2014 same ear, different world.", "oddball paradigm": "Standard repeats interrupted by rare deviants (f1/f2 swapped across blocks). Deviant pop-out measures true novelty detection, not fatigue.", "CSI": "Common selectivity index: (deviant responses \u2212 standard)/(sum). +1 = deviant-only, \u22121 = standard-only. Compute once by hand and it sticks.", "MMN": "Mismatch negativity: EEG blip when oddball breaks a repetitive sound \u2014 population-level SSA readout.", "attention": "Boost attended, suppress else. Knudsen loop (saliency\u2192competition\u2192working memory\u2192action). Neural signature: lower noise correlations (V4, cholinergic mice) = more independent info = better decoding.", "noise correlation": "Shared trial-to-trial wobble between neurons. Less share = more info. Attention's decorrelation is why populations beat single cells when you care.", "ChR2": "Channelrhodopsin: light-gated channel expressed in cholinergic axons; shine light \u2192 they fire \u2192 attention up, correlations down, reliability up. Causal test, not correlation.", "subplate neuron": "First-born cortical scaffold (SPN): bridges thalamus\u2192layer 4 early. Remove them \u2192 no ocular columns, no L4 inhibition, wrong tonotopy. Early injury echoes for life.", "sparse coding": "Represent with few active units: minimize error + \u03bb\u00b7sparsity. Olshausen\u2013Field showed this alone grows V1-like Gabors from natural images where PCA (Gaussian assumption) fails.", "PCA": "Principal components: best Gaussian compression axes. Fails on natural images/sounds because they're non-Gaussian \u2014 hence need sparseness, not just variance.", "matching pursuit": "Greedy sparse coder: pick best kernel, subtract, repeat. Smith\u2013Lewicki used it for sound \u2192 kernels matching auditory-nerve revcor filters.", "revcor filter": "Reverse-correlation measured impulse response of auditory nerve. Theory wins when learned efficient kernels overlay these exactly.", "ECO": "Ear-canal opening: before it SPNs are the stronger deviant detectors; after, layer 4 takes over. Development hands off the job."}, "equations": {"eq-nernst": "Nernst + isolation logic \u2014 what each symbol means:\nE = balance voltage for that ion\nR = gas constant, T = temperature, z = ion charge (+1 for Na/K), F = Faraday constant\nCout / Cin = outside vs inside concentration (flip them = flip the sign)\nVm = membrane voltage; E_ion = voltage where that ion rests\nStory: two batteries (Na +40 mV, K \u221285 mV); most-open doors win Vm.\nTrap: clamp V + block one channel to weigh each battery alone.", "eq-lif": "Leaky integrate-and-fire \u2014 variables, one per line:\nC = capacitance (charge storage)\nR = leak resistance (the hole in the bucket)\nEL = leak battery (rest target)\nIsyn = synaptic drive current (the tap)\nVth = threshold (yell when reached)\nVreset = value after spike (emptied bucket)\nStory: bucket with hole under tap; every fill yells identically.\nTrap: no gates \u2192 no shape, no refractoriness, no inactivation.", "eq-hh": "Hodgkin\u2013Huxley core \u2014 variables, one per line:\ng-bar_K / g-bar_Na / gL = max conductances (how many doors exist)\nEK / ENa / EL = ionic batteries\nm = fast Na opener (3 needed: m\u00b3)\nh = slow Na shutter (inactivation, 1 needed)\nn = slow K opener (4 needed: n\u2074)\nx\u221e(V) = steady openness at voltage V\n\u03c4x(V) = speed at V, with \u03c4m < \u03c4h < \u03c4n\nStory: spike = coincidence of independent doors; powers are fitted probabilities.\nTrap: h closes after opening \u2014 it is not a second opener."}, "figures": {"story_images/Week_1_-_full_p0_x106.png": "W1 neuron/brain map.\nRead: soma center, dendrite bushes = inputs, single axon = output, terminal synapses.\nTakeaway: 10k in/out per cell; layer 4 = thalamic inbox.", "story_images/Week_1_-_full_p0_x110.png": "W1 networks/synapses.\nRead: many-to-many wiring; chemical (vesicle\u2192receptor, flexible) vs gap junction (direct, fast).\nTakeaway: most computation = chemical; speed jobs = electrical.", "story_images/Week_3_-_Notes_p0_x76.png": "W3 LIF hand circuit.\nRead: Cin capacitor, GL leak resistor, EL battery, Iext arrow in.\nTakeaway: one RC point = the whole LIF assumption (isopotential).", "story_images/Week_3_-_Notes_p0_x82.png": "W3 clamp traces.\nRead: block K \u2192 Na-only inflow; block Na \u2192 K-only rise; multi-voltage clamps show activation then inactivation back to zero.\nTakeaway: why gates need powers and two time scales.", "story_images/Week_4_Notes_p0_x123.png": "W4 limit cycle.\nRead: trajectory spirals out, locks onto closed loop; inset Vm(t) grows then repeats identically.\nTakeaway: fixed amplitude = nonlinearity (linear would scale with kick).", "story_images/Week_4_Notes_p10_x59.png": "W4 V\u2013m plane.\nRead: green dots = 3 equilibria (rest r stable, s saddle); arrows = flow; saddle manifold = threshold.\nTakeaway: start left \u2192 decay; right \u2192 spike to m\u22481.", "story_images/Week_7_-_Notes_p0_x11.png": "W7 two Gaussians \u03bc1/\u03bc2.\nRead: x-axis = spike count, two humps S1/S2; overlap = errors.\nTakeaway: separation \u221d \u0394mean/\u03c3 (d\u2032); KL formalizes it.", "story_images/Week_8_-_Notes_p1_x11.png": "W8 likelihood\u2192Fisher chain.\nRead top-down: likelihood p(r|s) \u2192 score slope \u2192 bias/variance \u2192 Fisher \u2192 CR floor 1/I.\nTakeaway: steep = informative.", "story_images/Week_8_-_Notes_p3_x22.png": "W8 ROC + STRF.\nRead ROC: each threshold = one point; bigger coherence \u2192 fatter curve, bigger AUC.\nRead STRF: passive vs behavioral fields reshape near target.\nTakeaway: code moves with task.", "story_images/Week_9_-_Notes_p4_x16.png": "W9 vesicle 3-state doodle.\nRead: Recovered \u2192 Effective (green, release) \u2192 Inactive (red) \u2192 Recovered.\nTakeaway: depression = stuck Inactive; facilitation = boosted Effective.", "story_images/Week_10_-_Notes_p4_x22.png": "W10 STDP.\nRead A: timing protocol (pre/post order). B: classic window (+\u0394t LTP red right, \u2212\u0394t LTD black left). C/D: modulation.\nTakeaway: order flips sign; context grades size.", "story_images/Week_10_-_Notes_p5_x28.png": "W10 Hebb math.\nRead: rate model v\u2248w\u00b7u \u2192 averaged \u0394w \u2192 Q correlation matrix \u2192 instability note.\nTakeaway: caps (BCM/normalization) are mandatory.", "story_images/Week_11_-_Notes_p0_x8.png": "W11 oddball.\nRead: two blocks swapping f1/f2 standard/deviant feeding CSI.\nTakeaway: compute CSI once; +1 deviant-only, \u22121 standard-only.", "story_images/Week_11_-_Notes_p3_x20.png": "W11 attention decorrelation.\nRead: correlated (redundant) vs decorrelated (informative) rasters.\nTakeaway: less shared noise = better decoding.", "story_images/Week_12_-_Notes_p1_x10.png": "W12 sparse fields.\nRead: grid of learned \u03c6i \u2014 localized oriented Gabors, not PCA blobs.\nTakeaway: error + sparseness grows V1 look-alikes.", "story_images/Week_12_-_Notes_p10_x66.png": "W12 auditory kernels vs revcor.\nRead: sharp attack, gradual decay, narrowband kernels overlaid on cat revcor \u2014 near match.\nTakeaway: efficiency predicts biology."}};
+(function(){
+const terms = Object.keys(GLOSSARY.terms).sort((a,b)=>b.length-a.length);
+function tipSpan(label, text){
+  const s=document.createElement('span');s.className='gloss';s.tabIndex=0;
+  s.appendChild(document.createTextNode(label));
+  const t=document.createElement('span');t.className='tip';
+  const b=document.createElement('b');b.className='t';b.textContent=label;
+  t.appendChild(b);t.appendChild(document.createTextNode(text));
+  s.appendChild(t);return s;
+}
+function inSkip(node){
+  let el=node.parentElement;
+  while(el){
+    if(el.classList&&(el.classList.contains('gloss')||el.classList.contains('tip')||el.classList.contains('eq')))return true;
+    const tag=(el.tagName||'').toLowerCase();
+    if(tag==='script'||tag==='style'||tag==='figure'||tag==='figcaption')return true;
+    if(tag==='mjx-container'||tag==='svg'||tag==='mjx-assistive-mml')return true;
+    el=el.parentElement;
+  }
+  return false;
+}
+function wrapOne(term, defn){
+  const t=term.toLowerCase();
+  const isWordCh=c=>/[A-Za-z0-9_]/.test(c||'');
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  for(let node of nodes){
+    if(!node.parentNode||!node.nodeValue||!node.nodeValue.trim()||inSkip(node))continue;
+    let idx=node.nodeValue.toLowerCase().indexOf(t);
+    while(idx>=0){
+      const before=node.nodeValue[idx-1],after=node.nodeValue[idx+term.length];
+      if(term.length<=4&&(isWordCh(before)||isWordCh(after))){
+        idx=node.nodeValue.toLowerCase().indexOf(t,idx+1);
+        continue;
+      }
+      const matchEnd=node.splitText(idx);
+      const rest=matchEnd.splitText(term.length);
+      const span=tipSpan(matchEnd.nodeValue,defn);
+      matchEnd.parentNode.replaceChild(span,matchEnd);
+      node=rest;
+      if(!node||!node.nodeValue)break;
+      idx=node.nodeValue.toLowerCase().indexOf(t);
+    }
+  }
+}
+function wrapTerms(){ for(const term of terms){ wrapOne(term, GLOSSARY.terms[term]); } }
+function eqTips(){
+  const eqs=document.querySelectorAll('div.eq');
+  eqs.forEach((el)=>{
+    const txt=el.textContent;
+    let key='eq-hh';
+    if(/Nernst|C_\{out\}|E_\{ion\}|Cout/.test(txt))key='eq-nernst';
+    else if(/V_\{th\}|V_\{reset\}|isopotential|threshold.*reset|Axial|Compartments/i.test(txt))key='eq-lif';
+    const t=document.createElement('span');t.className='tip';t.textContent=GLOSSARY.equations[key];
+    el.classList.add('gloss-eq','gloss');el.appendChild(t);
+  });
+}
+function figTips(){
+  document.querySelectorAll('figure').forEach(fig=>{
+    const img=fig.querySelector('img');
+    const src=img?img.getAttribute('src'):'';
+    const base=src?src.split('/').pop():'';
+    const key=Object.keys(GLOSSARY.figures).find(k=>k.split('/').pop()===base);
+    if(!key||!GLOSSARY.figures[key])return;
+    fig.classList.add('gloss-fig','gloss');
+    const t=document.createElement('span');t.className='tip';t.textContent=GLOSSARY.figures[key];
+    fig.appendChild(t);
+  });
+}
+function run(){ wrapTerms(); eqTips(); figTips(); }
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);
+else run();
+})();
+
+</script>
+<script>
+document.addEventListener('mouseover',function(e){
+  const inner=e.target.closest?e.target.closest('.gloss'):null;
+  document.querySelectorAll('.gloss.tip-suppressed').forEach(el=>{el.classList.remove('tip-suppressed');const t=el.querySelector(':scope > .tip');if(t)t.style.display='';});
+  if(inner){let a=inner.parentElement;while(a){if(a.classList&&a.classList.contains('gloss')){a.classList.add('tip-suppressed');const t=a.querySelector(':scope > .tip');if(t)t.style.display='none';}a=a.parentElement;}}
+});
+document.addEventListener('mouseover',function(e){
+  const g=e.target.closest?e.target.closest('.gloss'):null;
+  if(!g)return;
+  const tip=g.querySelector(':scope > .tip');
+  if(!tip)return;
+  tip.style.left='';tip.style.right='';
+  requestAnimationFrame(()=>{
+    const r=tip.getBoundingClientRect();
+    if(r.right>window.innerWidth-8){tip.style.left='auto';tip.style.right='0';}
+    if(r.left<8){tip.style.left='0';tip.style.right='auto';}
+  });
+});
+</script>
+</body></html>
