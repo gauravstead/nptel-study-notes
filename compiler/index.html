@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compiler Design — from zero to exam-ready</title>
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'global'}};</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script>
+(function(){try{var t=localStorage.getItem('compiler-design-notes-theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');}else if(t!=='light'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();
+</script>
+<style>
+:root{--ink:#1d2433;--mut:#5b6478;--acc:#1565c0;--bg:#fff}
+*{box-sizing:border-box}body{font-family:Georgia,serif;color:var(--ink);max-width:940px;margin:0 auto;padding:24px 20px 80px;line-height:1.7;background:var(--bg)}
+h1{font-size:28px}h2{font-size:20px;color:#0d47a1;margin:26px 0 6px}
+p,li{font-size:15.5px}.meta{color:var(--mut);font-size:13px}a{color:var(--acc)}
+.toc{background:#f7f9ff;border:1px solid #d6e2ff;border-radius:10px;padding:14px 18px}
+.move{background:#f2f7ff;border-left:5px solid var(--acc);padding:10px 14px;border-radius:0 8px 8px 0}
+.work{background:#fff;border:1px solid #e2e2e2;border-radius:10px;padding:12px 14px;margin:12px 0;page-break-inside:avoid}
+.q{background:#fafafa;border:1px solid #e2e2e2;border-radius:8px;padding:10px 14px;margin:10px 0}
+.key{background:#e6f4ea;border:1px solid #34a853;border-radius:8px;padding:8px 12px;margin-top:8px}
+.trap{background:#fff8e1;border:1px solid #e0b400;border-radius:8px;padding:8px 12px;margin-top:8px}
+.src{font-size:12px;color:var(--mut)}
+.eq{background:#f6f6f6;border:1px solid #ddd;border-radius:8px;padding:10px 14px;font-size:16px;text-align:center;overflow-x:auto;margin:10px 0}
+.shots{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 2px}
+.shots figure{margin:0;border:1px solid #d8dfea;border-radius:8px;padding:6px;background:#fdfdff;max-width:430px}
+.shots img{width:100%;height:auto;display:block;border-radius:4px}
+.shots figcaption{font-size:12px;color:#5b6478;text-align:center;padding:5px 2px 0}
+#theme-toggle{position:fixed;top:12px;right:12px;z-index:100;background:#fff;border:1px solid #bcd2ff;border-radius:20px;padding:6px 12px;font-size:14px;cursor:pointer}
+html[data-theme="dark"]{--ink:#e2e7f2;--mut:#9aa5bd;--bg:#12161f}
+html[data-theme="dark"] body{background:var(--bg);color:var(--ink)}
+html[data-theme="dark"] h2{color:#9cc4ff}html[data-theme="dark"] a{color:#7db7ff}
+html[data-theme="dark"] .toc{background:#17202f;border-color:#2c3f63}
+html[data-theme="dark"] .move{background:#17202f}
+html[data-theme="dark"] .work{background:#1a2130;border-color:#333f55}
+html[data-theme="dark"] .q{background:#1a2130;border-color:#333f55}
+html[data-theme="dark"] .key{background:#12291a;border-color:#2f9e44}
+html[data-theme="dark"] .trap{background:#2a2113;border-color:#8a6d1c;color:#f0e6cf}
+html[data-theme="dark"] .eq{background:#1a2130;border-color:#333f55}
+html[data-theme="dark"] .shots figure{border-color:#333f55;background:#1a2130}
+html[data-theme="dark"] .shots img{background:#fff}
+html[data-theme="dark"] #theme-toggle{background:#1a2130;color:#e2e7f2}
+html[data-theme="dark"] mjx-container[jax="SVG"]{color:var(--ink)}
+@media print{html[data-theme="dark"]{--ink:#1d2433;--mut:#5b6478;--bg:#fff}html[data-theme="dark"] body{background:#fff;color:#1d2433}.shots{display:block}
+.shots figure{max-width:100%;page-break-inside:avoid;margin:10px 0}
+.work{page-break-inside:auto}#theme-toggle{display:none}.toc{display:none}.work{page-break-inside:avoid}}
+/* --- additions for this page; the component look above is kept intact --- */
+h3{font-size:17px;color:#0d47a1;margin:20px 0 4px}
+h4{font-size:15.5px;margin:16px 0 4px}
+.lede{font-size:17px;line-height:1.65;margin:6px 0 14px}
+.promise{background:#f2f7ff;border:1px solid #bcd2ff;border-left:5px solid var(--acc);border-radius:0 8px 8px 0;padding:12px 16px;margin:14px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2 .work{margin:0}
+.pipe{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:12px 0}
+.pipe .node{background:#f2f7ff;border:1px solid #bcd2ff;border-radius:8px;padding:5px 7px;font-size:12.5px;line-height:1.35;min-width:0}
+.pipe .node b{display:block;font-size:12.5px}
+.pipe .node span{color:var(--mut);font-size:11px}
+.pipe .arrow{color:var(--acc);font-weight:bold;font-size:15px}
+pre{background:#f6f6f6;border:1px solid #ddd;border-radius:8px;padding:10px 14px;overflow-x:auto;font-size:13px;line-height:1.45;margin:10px 0}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:.92em}
+.tree{white-space:pre;font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:12.5px;line-height:1.35}
+.table-wrap{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:0}
+th,td{border:1px solid #d8dfea;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f2f7ff;font-weight:bold}
+td code{white-space:nowrap}
+.small{font-size:13px;color:var(--mut)}
+.tag{display:inline-block;background:#eef3ff;border:1px solid #c9d8ff;border-radius:12px;padding:0 7px;font-size:12px;color:#174a8b}
+ul.tight li,ol.tight li{margin:3px 0}
+hr{border:0;border-top:1px solid #e2e2e2;margin:22px 0}
+html[data-theme="dark"] h3,html[data-theme="dark"] h4{color:#9cc4ff}
+html[data-theme="dark"] .promise{background:#17202f;border-color:#2c3f63;border-left-color:var(--acc)}
+html[data-theme="dark"] .pipe .node{background:#17202f;border-color:#2c3f63}
+html[data-theme="dark"] pre{background:#1a2130;border-color:#333f55;color:#e2e7f2}
+html[data-theme="dark"] th{background:#17202f}
+html[data-theme="dark"] td,html[data-theme="dark"] th{border-color:#333f55}
+html[data-theme="dark"] .tag{background:#1b2a44;border-color:#33507c;color:#bcd7ff}
+html[data-theme="dark"] hr{border-top-color:#333f55}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}.pipe .arrow{display:none}.pipe{gap:5px}.pipe .node{min-width:0}}
+@media print{
+ html[data-theme="dark"] .toc,html[data-theme="dark"] .move,html[data-theme="dark"] .work,html[data-theme="dark"] .q,html[data-theme="dark"] .key,html[data-theme="dark"] .trap,html[data-theme="dark"] .eq,html[data-theme="dark"] .promise,html[data-theme="dark"] pre,html[data-theme="dark"] .tag,html[data-theme="dark"] th,html[data-theme="dark"] .pipe .node{color:#1d2433!important}
+ html[data-theme="dark"] .work{background:#fff!important;border-color:#e2e2e2!important}
+ html[data-theme="dark"] .q{background:#fafafa!important;border-color:#e2e2e2!important}
+ html[data-theme="dark"] .move,html[data-theme="dark"] .promise{background:#f2f7ff!important;border-color:#bcd2ff!important;border-left-color:#1565c0!important}
+ html[data-theme="dark"] .key{background:#e6f4ea!important;border-color:#34a853!important}
+ html[data-theme="dark"] .trap{background:#fff8e1!important;border-color:#e0b400!important}
+ html[data-theme="dark"] .eq,html[data-theme="dark"] pre{background:#f6f6f6!important;border-color:#ddd!important}
+ html[data-theme="dark"] .tag{background:#eef3ff!important;border-color:#c9d8ff!important}
+ html[data-theme="dark"] th{background:#f2f7ff!important;border-color:#d8dfea!important}
+ html[data-theme="dark"] .pipe .node{background:#f2f7ff!important;border-color:#bcd2ff!important}
+ html[data-theme="dark"] h1,html[data-theme="dark"] h2,html[data-theme="dark"] h3,html[data-theme="dark"] h4{color:#0d47a1!important}
+ body{max-width:none;padding:0}
+ .work,.q,.key,.trap,.eq,.promise,table,.pipe{page-break-inside:avoid}
+ pre{white-space:pre-wrap;word-break:break-word}
+}
+</style></head><body>
+<button id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+<header>
+<p class="meta">GATE Computer Science · Section 7 · Compiler Design</p>
+<h1>Compiler Design, From the Ground Up</h1>
+<p class="lede">A complete plain-language walkthrough of the GATE compiler syllabus: lexical analysis, parsing, syntax-directed translation, runtime environments, intermediate code, local optimization, and the data-flow analyses behind constant propagation, liveness, and common-subexpression elimination.</p>
+<div class="promise"><b>The promise.</b> This page starts from “a compiler is a program that translates a program” and ends with fixed-point data-flow analysis. It assumes you can write a loop and a function, and that you have seen a graph and a set. It assumes no compilers course. Every rule is followed by the mechanism that makes it true and a concrete example. Nothing important is hidden behind a click, a hover, or a puzzle.</div>
+<div class="grid2">
+<div class="work"><b>Source.</b> The structure and terminology follow Aho, Lam, Sethi, and Ullman, <i>Compilers: Principles, Techniques, and Tools</i>, 2nd edition (the “Dragon Book”), chapters 1–9. Section tags point to the book’s organization, not to page numbers. Where the book and the syllabus use different boundaries, the page says so.</div>
+<div class="work"><b>Prerequisites.</b> Variables, assignment, functions, recursion, loops; sets, relations, functions; trees and directed graphs; the idea of a formal language. No regular-expression theory, no parser theory, and no optimization background is assumed. The few pieces of discrete math you need are introduced where they are used.</div>
+</div>
+<div class="move"><b>How to read it.</b> Read in order. Each section has the same shape: the plain idea first, then the mechanism, then a worked example, then a green “key” box and a yellow “heads-up” box. The green box is the sentence to remember; the yellow box is the mistake that costs marks. If you already know a section, read its key and heads-up boxes, then continue.</div>
+
+<nav class="toc" aria-label="Contents">
+<b>Contents, in learning order.</b>
+<ol class="tight">
+<li><a href="#why">Why this exists: the translation pipeline</a></li>
+<li><a href="#model">The compiler as a pipeline</a></li>
+<li><a href="#lex">Lexical analysis: characters to tokens</a></li>
+<li><a href="#grammar">Grammars, derivations, and ambiguity</a></li>
+<li><a href="#topdown">Top-down parsing: predict the next move</a></li>
+<li><a href="#bottomup">Bottom-up parsing: shift, reduce, and LR</a></li>
+<li><a href="#sdt">Syntax-directed translation: attach meaning to the tree</a></li>
+<li><a href="#ir">Intermediate code and type checking</a></li>
+<li><a href="#runtime">Runtime environments: where values live</a></li>
+<li><a href="#local">Basic blocks, CFGs, and local optimization</a></li>
+<li><a href="#dataflow">Data-flow analysis: facts that flow through the graph</a></li>
+<li><a href="#toolkit">The Superpowers toolkit</a></li>
+</ol>
+<p class="meta">The table of contents is for screen reading; the printed page omits it and keeps every section.</p>
+</nav>
+</header>
+
+<h2 id="why">Why this exists: one pipeline, many jobs</h2>
+<p>A compiler is a program that reads a program in one language and writes an equivalent program in another language. “Equivalent” means the output program computes the same answers and has the same observable effects. A compiler also has to reject bad programs with useful errors. That is the whole subject. The syllabus is a list of the jobs inside that translation, in the order the data meets them.</p>
+
+<div class="pipe" aria-label="Compiler pipeline">
+<div class="node"><b>Source text</b><span>characters</span></div><div class="arrow">→</div>
+<div class="node"><b>Lexical analyzer</b><span>tokens</span></div><div class="arrow">→</div>
+<div class="node"><b>Parser</b><span>syntax tree</span></div><div class="arrow">→</div>
+<div class="node"><b>Semantic analysis</b><span>types, SDT</span></div><div class="arrow">→</div>
+<div class="node"><b>IR generator</b><span>three-address code</span></div><div class="arrow">→</div>
+<div class="node"><b>Optimizer</b><span>equivalent, faster IR</span></div><div class="arrow">→</div>
+<div class="node"><b>Code generator</b><span>target code</span></div>
+</div>
+
+<p>Two side structures run alongside every stage. The <b>symbol table</b> remembers what names mean: type, scope, storage, and sometimes the generated location. The <b>error handler</b> records what went wrong and tries to keep going so the programmer sees more than one error per compile. The symbol table is the glue between lexical analysis, parsing, type checking, and runtime storage; that is why it appears in several sections below.</p>
+
+<div class="grid2">
+<div class="work"><b>Front end: understand the program.</b> Lexing, parsing, semantic analysis, and IR generation. It is source-language dependent and largely machine independent. Its output is a checked intermediate representation.</div>
+<div class="work"><b>Back end: make it run.</b> Optimization and code generation. It is target-machine dependent. Its input is the IR; its output is instructions, registers, and memory layout. Optimization often sits in the middle, sharing both worlds.</div>
+</div>
+
+<p>The syllabus names seven things: lexical analysis, parsing, syntax-directed translation, runtime environments, intermediate code generation, local optimization, and data-flow analyses (constant propagation, liveness, common-subexpression elimination). In pipeline order, they are not seven separate subjects. They are seven answers to one question: <i>what does the next stage need to know, and how can we compute it without losing meaning?</i></p>
+
+<div class="move"><b>The one-sentence map.</b> Characters become tokens; tokens become trees; trees get meaning; meaning becomes intermediate code; intermediate code gets optimized using facts; the facts come from data-flow analysis; and the runtime environment explains where every value actually lives while the program runs.</div>
+
+<h3>The learning order, and why it is this order</h3>
+<ol class="tight">
+<li><b>The pipeline first.</b> You need to know what each stage receives and hands on before studying any one stage.</li>
+<li><b>Lexical analysis.</b> It is the smallest complete translation problem: regular expressions in, tokens out. It teaches states, nondeterminism, and determinization without grammar complexity.</li>
+<li><b>Grammars and trees.</b> Parsing needs a precise way to say what a legal program looks like. Derivations and ambiguity are that language.</li>
+<li><b>Top-down parsing.</b> The most direct parser: look at the next token, predict a production, recurse. It motivates FIRST, FOLLOW, left-recursion removal, and left factoring.</li>
+<li><b>Bottom-up parsing.</b> The industrial-strength parser: shift tokens, reduce handles, and build an LR automaton. It reuses the grammar ideas and adds lookahead.</li>
+<li><b>Syntax-directed translation.</b> Once the tree exists, attach values and types to it. This is where parsing becomes compiling.</li>
+<li><b>Intermediate code and type checking.</b> Turn the annotated tree into a small, machine-independent instruction set. Type checking keeps the operations meaningful.</li>
+<li><b>Runtime environments.</b> Before optimizing, know where variables, parameters, and frames live at run time.</li>
+<li><b>Basic blocks and local optimization.</b> The first optimization scale: one straight-line block, then a graph of blocks.</li>
+<li><b>Data-flow analysis.</b> The general machine for facts that must be true at many program points. It powers constant propagation, liveness, and global common-subexpression elimination.</li>
+<li><b>The toolkit.</b> A numbered set of moves to recall under exam pressure.</li>
+</ol>
+
+<div class="trap"><b>Heads-up: “phase” is not “pass.”</b> A phase is a logical job (lexing, parsing, optimization). A pass is one complete read of the input. A compiler can combine several phases in one pass, or split one phase across several passes. Exam questions often say “phase” when they mean the logical job; do not assume a separate program or a separate traversal.</div>
+<h2 id="model">1. The compiler as a pipeline</h2>
+<p>Start with the smallest true picture. A compiler has an <b>analysis</b> half that figures out what the source means, and a <b>synthesis</b> half that builds the target. The boundary is an intermediate representation (IR): a program form that is simpler than the source but not yet tied to a machine.</p>
+
+<h3>1.1 What each phase receives and hands on</h3>
+<div class="table-wrap"><table>
+<tr><th>Phase</th><th>Reads</th><th>Produces</th><th>Main question</th></tr>
+<tr><td>Lexical analysis</td><td>Characters</td><td>Tokens with attributes</td><td>What are the words?</td></tr>
+<tr><td>Syntax analysis (parsing)</td><td>Tokens</td><td>Parse tree or syntax tree</td><td>Do the words form legal sentences?</td></tr>
+<tr><td>Semantic analysis</td><td>Tree + symbol table</td><td>Checked tree, types, annotations</td><td>Do the sentences make sense?</td></tr>
+<tr><td>Intermediate code generation</td><td>Checked tree</td><td>IR (often three-address code)</td><td>What is a simple, explicit program?</td></tr>
+<tr><td>Optimization</td><td>IR + program facts</td><td>Equivalent, cheaper IR</td><td>Can we compute the same thing with less work?</td></tr>
+<tr><td>Code generation</td><td>IR</td><td>Target instructions</td><td>How does this machine do it?</td></tr>
+</table></div>
+
+<p>“Semantic analysis” is not one algorithm. It is the collection of checks that need more than syntax: names are declared, types match, functions are called with the right number of arguments, `break` is inside a loop, and so on. Syntax-directed translation is the usual way to organize those checks: walk the tree and compute attributes such as type, value, or generated code.</p>
+
+<h3>1.2 One statement through every stage</h3>
+<p>Take the classic assignment</p>
+<div class="eq">\[ \texttt{position} = \texttt{initial} + \texttt{rate} * 60 \]</div>
+<p>Assume <code>position</code>, <code>initial</code>, and <code>rate</code> are floating-point variables and <code>60</code> is an integer constant. The lexer turns the characters into tokens. A token is a pair: a class and an attribute. The attribute tells which identifier or which number.</p>
+<div class="q"><b>Tokens.</b> <code>&lt;id, 1&gt; &lt;assign&gt; &lt;id, 2&gt; &lt;plus&gt; &lt;id, 3&gt; &lt;times&gt; &lt;num, 60&gt;</code>. The numbers 1, 2, 3 are symbol-table indices, not values. The lexer does not know or care that the statement is an assignment; it only knows the word classes.</div>
+
+<p>The parser groups the tokens according to the grammar. Multiplication binds tighter than addition, so the tree is not a flat list. It records the intended grouping:</p>
+<pre class="tree">          =
+        /   \
+     id1     +
+            / \
+         id2   *
+              / \
+           id3   60</pre>
+<p>The root is the assignment. Its left child is the place being assigned; its right child is the expression. The expression’s top operator is <code>+</code>, and its right operand is the product. This tree is already a small intermediate form: the grouping is explicit, and the original parentheses and precedence rules are no longer needed.</p>
+
+<p>Semantic analysis walks the tree with the symbol table. It discovers that <code>id1</code>, <code>id2</code>, and <code>id3</code> are floats, while <code>60</code> is an integer. Most languages convert the integer to a float before multiplying. The tree gains an explicit conversion node, often written <code>inttofloat</code>.</p>
+<div class="eq">\[ \texttt{id1} = \texttt{id2} + \texttt{id3} * \texttt{inttofloat}(60) \]</div>
+<p>Intermediate code generation makes every operation and temporary explicit. A common form is <b>three-address code</b>: each instruction has at most one operator and at most three names.</p>
+<pre><code>t1 = inttofloat(60)
+t2 = id3 * t1
+t3 = id2 + t2
+id1 = t3</code></pre>
+<p>The optimizer notices that <code>60</code> can be converted at compile time, and that <code>t1</code> is used once. It can fold the conversion and shorten the sequence:</p>
+<pre><code>t1 = id3 * 60.0
+id1 = id2 + t1</code></pre>
+<p>Finally, code generation maps the temporaries to registers and picks instructions. One possible target sequence is:</p>
+<pre><code>LDF   R2, id3
+MULF  R2, R2, #60.0
+LDF   R1, id2
+ADDF  R1, R1, R2
+STF   id1, R1</code></pre>
+<p>The exact instructions do not matter for the syllabus. The shape does: <b>characters → tokens → tree → typed tree → IR → cheaper IR → target code</b>. Each arrow loses some source-level convenience and gains some machine-level explicitness.</p>
+
+<div class="q"><b>Symbol table at this point.</b>
+<div class="table-wrap"><table>
+<tr><th>Name</th><th>Kind</th><th>Type</th><th>Scope</th><th>Storage</th></tr>
+<tr><td>position</td><td>variable</td><td>float</td><td>global</td><td>static data</td></tr>
+<tr><td>initial</td><td>variable</td><td>float</td><td>global</td><td>static data</td></tr>
+<tr><td>rate</td><td>variable</td><td>float</td><td>global</td><td>static data</td></tr>
+</table></div>
+The parser uses the table to tell an identifier from a keyword; semantic analysis uses it to get types; code generation uses it to find storage. One table, several consumers.</div>
+
+<h3>1.3 Why split the job into phases?</h3>
+<ul class="tight">
+<li><b>Different grammars for different jobs.</b> Tokens are regular: identifiers, numbers, and punctuation can be described by finite automata. Program structure is context-free: nested parentheses, blocks, and expressions need a stack. Types and declarations need context-sensitive checks. Using a parser for characters would be wasteful; using a finite automaton for nested blocks is impossible.</li>
+<li><b>Portability.</b> A front end for language L plus a back end for machine M gives a compiler for L on M. With \(n\) languages and \(m\) machines, separate front ends and back ends need \(n+m\) components instead of \(n \times m\) whole compilers. The IR is the contract between them.</li>
+<li><b>Optimization needs a machine-independent form.</b> It is easier to reason about “this expression is computed twice” in IR than in raw assembly, and easier to retarget the result.</li>
+<li><b>Errors are easier to explain at the right level.</b> “Unterminated string” is a lexical error. “Missing `)`” is a syntax error. “Adding a string to an integer” is a semantic error. Each phase has the context to say what went wrong.</li>
+</ul>
+
+<div class="move"><b>Compiler versus interpreter.</b> A compiler translates the whole program before it runs; an interpreter executes the source (or an internal form) directly. The boundary is blurry: bytecode compilers translate to an IR, and a virtual machine interprets it; just-in-time compilers translate hot paths to machine code while the program runs. The analysis phases are similar; the difference is <i>when</i> translation happens and how much is done ahead of time.</div>
+
+<div class="key"><b>Key.</b> The compiler’s job is meaning-preserving translation. The front end recovers meaning; the back end preserves it while changing the form. The IR is the handoff point, and the symbol table is the shared memory of names.</div>
+<div class="trap"><b>Heads-up.</b> “Optimization” never means “change what the program does.” It means “produce a program with the same observable behavior that runs faster or uses less space.” If a transformation changes results, error behavior, or side effects, it is a bug, not an optimization. Languages with undefined behavior complicate this: the compiler may assume the undefined case never happens.</div>
+<h2 id="lex">2. Lexical analysis: characters to tokens</h2>
+<p>The lexer is the first phase that actually reads the source. Its job is narrow and complete: turn a stream of characters into a stream of <b>tokens</b>, discard layout that has no meaning (spaces, tabs, newlines, comments), track the line number for error messages, and put identifiers into the symbol table. It does not build a tree and it does not check types.</p>
+
+<h3>2.1 Token, lexeme, pattern: three words that exams mix up</h3>
+<div class="table-wrap"><table>
+<tr><th>Word</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><b>Token</b></td><td>A class of words the parser cares about, plus an optional attribute.</td><td><code>id</code>, <code>num</code>, <code>if</code>, <code>plus</code>, <code>assign</code></td></tr>
+<tr><td><b>Lexeme</b></td><td>The actual characters in the source that form one token.</td><td><code>count</code>, <code>42</code>, <code>if</code>, <code>+</code>, <code>=</code></td></tr>
+<tr><td><b>Pattern</b></td><td>A rule, usually a regular expression, describing the lexemes of one token class.</td><td><code>letter (letter | digit)*</code> for identifiers</td></tr>
+</table></div>
+<p>For the source fragment</p>
+<pre><code>if (count &gt; 10) count = 0;</code></pre>
+<p>the lexer might emit</p>
+<pre><code>&lt;if&gt; &lt;lparen&gt; &lt;id, count&gt; &lt;gt&gt; &lt;num, 10&gt; &lt;rparen&gt;
+&lt;id, count&gt; &lt;assign&gt; &lt;num, 0&gt; &lt;semicolon&gt;</code></pre>
+<p>The attribute is the extra information the parser will need later. For an identifier, the attribute is usually a pointer into the symbol table; for a number, the numeric value (and sometimes the literal text, to preserve precision and formatting). Keywords and punctuation usually need no attribute: their token class already says everything.</p>
+
+<div class="move"><b>Why the lexer is a separate phase.</b> Token rules are regular, so a finite automaton can recognize them in time proportional to the input, with no stack and very little memory. If the parser had to recognize identifiers character by character, its grammar would be enormous and slow. Separating the lexer also gives one place to handle comments, line numbers, character sets, and input buffering, and it makes the parser grammar smaller and more readable.</div>
+
+<h3>2.2 Longest match, priority, and one character of lookahead</h3>
+<p>Lexers use the <b>longest-match</b> rule (also called maximal munch): among all patterns that match at the current position, take the longest lexeme. If two patterns match the same longest lexeme, the earlier rule in the lexer specification wins. This is why <code>&gt;=</code> is not read as <code>&gt;</code> followed by <code>=</code>, and why <code>if</code> is a keyword rather than an identifier.</p>
+<div class="q"><b>Example.</b> With rules “<code>&gt;=</code> before <code>&gt;</code>” and “keyword <code>if</code> before identifier,” the input <code>if x &gt;= 10</code> becomes <code>&lt;if&gt; &lt;id,x&gt; &lt;ge&gt; &lt;num,10&gt;</code>. The lexer had to look one character past <code>&gt;</code> to see the <code>=</code>; if the next character had been a space, it would have stopped at <code>&gt;</code>.</div>
+<p>Most lexers need only one character of lookahead beyond the current lexeme, because regular languages can be recognized by a DFA that reads left to right. When the DFA has gone one character too far, the lexer backs up to the last accepting position. A common implementation keeps two buffers and places a sentinel character at the end of each, so the inner loop does not need a bounds check on every character. The sentinel is a real implementation trick, not a language feature; it must not be a character that can occur in the source, or the buffer logic must handle it.</p>
+
+<div class="trap"><b>Heads-up: reserved words versus identifiers.</b> If the identifier pattern is <code>letter (letter | digit)*</code>, it also matches <code>if</code>, <code>while</code>, and <code>return</code>. A lexer generator handles this either by putting keyword rules first (so the earlier-rule tie-break wins) or by recognizing an identifier and then looking it up in a keyword table. Do not say “the identifier pattern excludes keywords” unless your pattern actually does; the usual pattern does not.</div>
+
+<h3>2.3 The language toolkit: strings, languages, and regular expressions</h3>
+<p>A <b>string</b> is a finite sequence of symbols from an alphabet \(\Sigma\). The empty string is \(\varepsilon\); it has length zero. If \(s\) and \(t\) are strings, \(st\) is their concatenation. The notation \(s^n\) means \(s\) repeated \(n\) times, with \(s^0=\varepsilon\). A <b>language</b> is a set of strings, so it is a subset of \(\Sigma^*\), the set of all strings over \(\Sigma\).</p>
+<p>Three operations build languages:</p>
+<ul class="tight">
+<li><b>Union:</b> \(L \cup M = \{\,w \mid w\in L \text{ or } w\in M\,\}\).</li>
+<li><b>Concatenation:</b> \(LM = \{\,st \mid s\in L,\ t\in M\,\}\).</li>
+<li><b>Kleene star:</b> \(L^*\) is the union of \(L^0, L^1, L^2,\ldots\), where \(L^0=\{\varepsilon\}\). The <b>positive closure</b> \(L^+\) is \(LL^*\), i.e. one or more repetitions.</li>
+</ul>
+<p>The empty language \(\varnothing\) and the language \(\{\varepsilon\}\) are different. \(\varnothing\) contains no strings; \(\{\varepsilon\}\) contains exactly the empty string. This distinction matters in regex identities: \(r\varnothing=\varnothing\), while \(r\varepsilon=r\).</p>
+
+<p>A <b>regular expression</b> over \(\Sigma\) is defined inductively:</p>
+<ul class="tight">
+<li>\(\varnothing\), \(\varepsilon\), and each \(a\in\Sigma\) are regular expressions.</li>
+<li>If \(r\) and \(s\) are regular expressions, then \((r|s)\), \((rs)\), and \((r)^*\) are regular expressions.</li>
+<li>Nothing else is a regular expression unless it can be built by these rules.</li>
+</ul>
+<p>Precedence, from tightest to loosest, is <b>star</b>, then <b>concatenation</b>, then <b>union</b>. So \(ab^*|c\) means \((a(b^*))|c\), not \((ab)^*|c\) and not \(a(b^*|c)\). Parentheses override precedence. Many writers use \(r^+\) as shorthand for \(rr^*\), and \(r?\) for \(r|\varepsilon\).</p>
+
+<div class="q"><b>Examples that are worth memorizing.</b>
+<ul class="tight">
+<li>Identifiers: \(\texttt{letter}\,(\texttt{letter}\mid\texttt{digit})^*\), where <code>letter</code> is <code>[A-Za-z_]</code> and <code>digit</code> is <code>[0-9]</code>.</li>
+<li>Unsigned integers: \(\texttt{digit}^+\).</li>
+<li>Optional sign: \((+|-)?\,\texttt{digit}^+\).</li>
+<li>A simple floating literal: \(\texttt{digit}^+\.\texttt{digit}^*\) or \(\.\texttt{digit}^+\). In a real lexer, the dot must be escaped and the alternatives combined carefully.</li>
+<li>Strings with backslash escapes: <code>"([^"\\]|\\.)*"</code>. The negated class and the escape branch together say “any character except a quote or backslash, or a backslash followed by any character.”</li>
+<li>All strings over \(\{a,b\}\) that end in <code>abb</code>: \((a|b)^*abb\).</li>
+</ul></div>
+
+<p>Regular expressions obey algebraic laws that are useful for simplification and for seeing why two patterns describe the same language:</p>
+<div class="eq">\[
+\begin{aligned}
+r|s &= s|r, & (r|s)|t &= r|(s|t), \\
+(rs)t &= r(st), & r(s|t) &= rs|rt, \\
+\varepsilon r &= r, & \varnothing r &= \varnothing, \\
+(r^*)^* &= r^*, & (r|\varepsilon)^* &= r^*, \\
+r^+ &= rr^* = r^*r.
+\end{aligned}
+\]</div>
+<p>These are language equalities, not just notation. For example, \((r^*)^*=r^*\) because any number of repetitions of any number of repetitions is still some number of repetitions.</p>
+
+<div class="key"><b>Key.</b> A token class is a language; a pattern is a regular expression; the lexer is a recognizer for the union of all token patterns, with longest-match and rule-order tie-breaking layered on top.</div>
+<div class="trap"><b>Heads-up: regular expressions cannot count nesting.</b> A regular expression can say “any number of <code>a</code>s,” but it cannot say “\(n\) opening parentheses followed by \(n\) closing parentheses” for arbitrary \(n\). That language needs a stack, so it belongs to the parser, not the lexer. This is the practical reason comments with nested delimiters, balanced brackets, and indentation-sensitive blocks are not handled by a pure regular-expression lexer.</div>
+<h3>2.4 Finite automata: the machine behind the pattern</h3>
+<p>A <b>deterministic finite automaton</b> (DFA) has a finite set of states \(Q\), an input alphabet \(\Sigma\), a transition function \(\delta:Q\times\Sigma\to Q\), a start state \(q_0\), and a set of accepting states \(F\). It reads one character at a time and moves to exactly one next state. It accepts a string if the state after the last character is in \(F\).</p>
+<p>A <b>nondeterministic finite automaton</b> (NFA) relaxes two things: from a state and a character there may be zero, one, or many next states, and there may be \(\varepsilon\)-transitions that consume no input. Formally, \(\delta:Q\times(\Sigma\cup\{\varepsilon\})\to 2^Q\). An NFA accepts if <i>some</i> path through the machine ends in an accepting state. The NFA does not guess; “some path” is a mathematical statement about existence.</p>
+<p>DFAs and NFAs accept exactly the same class of languages: the regular languages. The NFA is easier to build from a regular expression; the DFA is faster to execute because there is no choice and no \(\varepsilon\)-closure at run time. The standard route is therefore:</p>
+<div class="pipe"><div class="node"><b>Regular expression</b><span>human pattern</span></div><div class="arrow">→</div><div class="node"><b>NFA</b><span>Thompson construction</span></div><div class="arrow">→</div><div class="node"><b>DFA</b><span>subset construction</span></div><div class="arrow">→</div><div class="node"><b>Minimal DFA</b><span>partition refinement</span></div><div class="arrow">→</div><div class="node"><b>Lexer table</b><span>fast matching</span></div></div>
+
+<h3>2.5 Thompson construction: regex to NFA</h3>
+<p>Thompson’s construction builds an NFA with one start state and one accepting state for each subexpression. The five shapes are worth drawing once and then recognizing forever.</p>
+<div class="table-wrap"><table>
+<tr><th>Regex form</th><th>NFA shape</th></tr>
+<tr><td>\(a\)</td><td>new start \(\xrightarrow{a}\) new accept</td></tr>
+<tr><td>\(\varepsilon\)</td><td>new start \(\xrightarrow{\varepsilon}\) new accept</td></tr>
+<tr><td>\(r\mid s\)</td><td>new start has \(\varepsilon\)-edges to the starts of \(r\) and \(s\); both accepts have \(\varepsilon\)-edges to a new accept.</td></tr>
+<tr><td>\(rs\)</td><td>concatenate: the accept of \(r\) gets an \(\varepsilon\)-edge to the start of \(s\); the combined start is \(r\)’s start, the combined accept is \(s\)’s accept.</td></tr>
+<tr><td>\(r^*\)</td><td>new start and new accept; \(\varepsilon\) from start to \(r\)’s start and to the new accept; \(\varepsilon\) from \(r\)’s accept back to \(r\)’s start and to the new accept.</td></tr>
+</table></div>
+<p>The construction never needs more than two new states per operator, so the NFA has \(O(|r|)\) states for a regular expression of length \(|r|\). It may have many \(\varepsilon\)-edges, which is why the next step exists.</p>
+
+<div class="q"><b>Worked example: \((a|b)^*abb\).</b> Use states 0–10. State 0 is the start and state 10 is the only accept.
+<div class="table-wrap"><table>
+<tr><th>State</th><th>On \(\varepsilon\)</th><th>On \(a\)</th><th>On \(b\)</th></tr>
+<tr><td>0</td><td>{1, 7}</td><td>—</td><td>—</td></tr>
+<tr><td>1</td><td>{2, 4}</td><td>—</td><td>—</td></tr>
+<tr><td>2</td><td>—</td><td>{3}</td><td>—</td></tr>
+<tr><td>3</td><td>{6}</td><td>—</td><td>—</td></tr>
+<tr><td>4</td><td>—</td><td>—</td><td>{5}</td></tr>
+<tr><td>5</td><td>{6}</td><td>—</td><td>—</td></tr>
+<tr><td>6</td><td>{1, 7}</td><td>—</td><td>—</td></tr>
+<tr><td>7</td><td>—</td><td>{8}</td><td>—</td></tr>
+<tr><td>8</td><td>—</td><td>—</td><td>{9}</td></tr>
+<tr><td>9</td><td>—</td><td>—</td><td>{10}</td></tr>
+<tr><td>10</td><td>—</td><td>—</td><td>—</td></tr>
+</table></div>
+Read the table as “from this state, on this input, go to these states.” The star’s loop is the pair of edges \(6\to1\) and \(6\to7\): after one repetition of \((a|b)\), the machine may repeat or leave the star. The final three symbols are the literal suffix \(abb\).</div>
+
+<h3>2.6 Subset construction: NFA to DFA</h3>
+<p>The key operation is the <b>\(\varepsilon\)-closure</b> of a set of NFA states: all states reachable from that set using only \(\varepsilon\)-edges, including the states themselves. For a set \(T\) and a character \(a\), \(\text{move}(T,a)\) is the set of states reachable from a state in \(T\) by one \(a\)-edge. A DFA state is a set of NFA states. Starting from \(\varepsilon\text{-closure}(\{q_0\})\), repeatedly compute</p>
+<div class="eq">\[ \text{next}(S,a)=\varepsilon\text{-closure}\bigl(\text{move}(S,a)\bigr) \]</div>
+<p>for each symbol \(a\). Each distinct set becomes one DFA state. A DFA state is accepting if it contains any NFA accepting state. The construction is often done lazily: only create the sets that are actually reachable from the start.</p>
+
+<div class="q"><b>The same example, subset by subset.</b> Start with \(A=\varepsilon\text{-closure}(\{0\})=\{0,1,2,4,6,7\}\).
+<ul class="tight">
+<li>From \(A\) on \(a\): states 2 and 7 move to 3 and 8; closure adds 6, 1, 7, 2, 4, so \(B=\{1,2,3,4,6,7,8\}\).</li>
+<li>From \(A\) on \(b\): state 4 moves to 5; closure adds 6, 1, 7, 2, 4, so \(C=\{1,2,4,5,6,7\}\).</li>
+<li>From \(B\) on \(a\): states 2 and 7 move to 3 and 8; closure gives \(B\) again. On \(b\): 4 and 8 move to 5 and 9; closure gives \(E=\{1,2,4,5,6,7,9\}\).</li>
+<li>From \(C\) on \(a\): 2 and 7 move to 3 and 8; closure gives \(B\). On \(b\): 4 moves to 5; closure gives \(C\).</li>
+<li>From \(E\) on \(a\): 2 and 7 move to 3 and 8; closure gives \(B\). On \(b\): 4 and 9 move to 5 and 10; closure gives \(F=\{1,2,4,5,6,7,10\}\).</li>
+<li>From \(F\) on \(a\): 2 and 7 move to 3 and 8; closure gives \(B\). On \(b\): 4 moves to 5; closure gives \(C\).</li>
+</ul>
+The reachable DFA states are \(A,B,C,E,F\). Only \(F\) is accepting, because it is the only subset that contains 10. Notice that \(A\) and \(C\) have exactly the same transitions: both go to \(B\) on \(a\) and to \(C\) on \(b\). They are equivalent and can be merged.</div>
+
+<div class="table-wrap"><table>
+<tr><th>DFA state</th><th>On \(a\)</th><th>On \(b\)</th><th>Accept?</th></tr>
+<tr><td>\(A=\{0,1,2,4,6,7\}\)</td><td>\(B\)</td><td>\(C\)</td><td>no</td></tr>
+<tr><td>\(B=\{1,2,3,4,6,7,8\}\)</td><td>\(B\)</td><td>\(E\)</td><td>no</td></tr>
+<tr><td>\(C=\{1,2,4,5,6,7\}\)</td><td>\(B\)</td><td>\(C\)</td><td>no</td></tr>
+<tr><td>\(E=\{1,2,4,5,6,7,9\}\)</td><td>\(B\)</td><td>\(F\)</td><td>no</td></tr>
+<tr><td>\(F=\{1,2,4,5,6,7,10\}\)</td><td>\(B\)</td><td>\(C\)</td><td>yes</td></tr>
+</table></div>
+
+<p>After merging \(A\) and \(C\), the minimal DFA has four states:</p>
+<div class="table-wrap"><table>
+<tr><th>State</th><th>On \(a\)</th><th>On \(b\)</th><th>Accept?</th></tr>
+<tr><td>\(S_0\) (old \(A,C\))</td><td>\(S_1\)</td><td>\(S_0\)</td><td>no</td></tr>
+<tr><td>\(S_1\) (old \(B\))</td><td>\(S_1\)</td><td>\(S_2\)</td><td>no</td></tr>
+<tr><td>\(S_2\) (old \(E\))</td><td>\(S_1\)</td><td>\(S_3\)</td><td>no</td></tr>
+<tr><td>\(S_3\) (old \(F\))</td><td>\(S_1\)</td><td>\(S_0\)</td><td>yes</td></tr>
+</table></div>
+<p>This is the familiar four-state DFA for “strings over \(\{a,b\}\) ending in \(abb\).” The states remember the longest suffix that is a prefix of \(abb\): nothing, \(a\), \(ab\), or \(abb\).</p>
+
+<div class="trap"><b>Heads-up: do not merge states just because both are non-accepting.</b> \(A\) and \(B\) are both non-accepting, but \(B\) can reach the accepting state \(F\) after reading \(bb\), while \(A\) cannot. They are distinguishable. Equivalence requires the same acceptance behavior for every continuation, not the same current label.</div>
+
+<h3>2.7 DFA minimization: keep only distinguishable states</h3>
+<p>Two states are <b>equivalent</b> if, for every input string, starting from either one leads to acceptance exactly when starting from the other does. Minimization starts with two blocks, accepting and non-accepting, and repeatedly splits a block whenever two of its states go to different blocks on some symbol. When no block can be split, each block is one state of the minimal DFA.</p>
+<div class="q"><b>On the table above.</b> Initial blocks: \(\{A,B,C,E\}\) and \(\{F\}\). On \(b\), \(E\) goes to \(F\) (the accepting block) while \(A,B,C\) go to non-accepting states, so split \(E\) out. Now consider \(\{A,B,C\}\): on \(a\) all go to \(B\), but on \(b\), \(A\) and \(C\) go to \(C\) while \(B\) goes to \(E\) (now a separate block), so split \(B\) out. Final blocks: \(\{A,C\}\), \(\{B\}\), \(\{E\}\), \(\{F\}\). That is the four-state DFA.</div>
+<p>The minimal DFA for a regular language is unique up to renaming states. That is why two different lexer generators can produce different-looking tables for the same token patterns and still behave identically.</p>
+
+<h3>2.8 How a real lexer uses all this</h3>
+<p>A lexer generator such as Lex or Flex takes regular definitions and rules, builds one NFA for all token patterns (or one per pattern and combines them), converts to a DFA, minimizes it, and emits a table-driven matcher. Each accepting DFA state is annotated with the rule that matched and the action to run. The driver repeatedly finds the longest accepting prefix, executes that action, and moves the input pointer to the end of the lexeme.</p>
+<pre><code>%{
+#include "tokens.h"
+%}
+digit   [0-9]
+letter  [A-Za-z_]
+%%
+"if"            { return IF; }
+{letter}({letter}|{digit})*  { yylval.s = strdup(yytext); return ID; }
+{digit}+        { yylval.n = atoi(yytext); return NUM; }
+"&gt;="           { return GE; }
+"&gt;"            { return GT; }
+[ \t\n]+        { /* skip layout */ }
+.               { error("illegal character"); }</code></pre>
+<p>The declarations section defines named regular expressions; the rules section lists pattern–action pairs; the user-code section is copied into the generated program. <code>yytext</code> points at the matched lexeme and <code>yyleng</code> is its length. Longest match is the default; if two rules match the same length, the earlier rule wins. A rule can call <code>yyless(n)</code> to push back part of the match, or <code>REJECT</code> to try the next-best rule (rare and slower). Start conditions let one lexer handle modes such as “inside a string” or “inside a comment.”</p>
+<p>The generated matcher is essentially a DFA plus a stack of the last accepting position. When it reaches a dead state or the end of the buffer, it backs up to the last accepting position. If there is no accepting position, the lexer reports a lexical error and applies a recovery rule: skip one character, skip to the next delimiter, insert a missing quote, or abort the current line.</p>
+
+<div class="key"><b>Key.</b> Regex → NFA is construction; NFA → DFA is subset construction (closure + move); DFA → minimal DFA is partition refinement. The lexer runs the minimal DFA, remembers the longest accepting prefix, and executes the winning rule.</div>
+<div class="trap"><b>Heads-up: subset construction can explode.</b> An \(n\)-state NFA can produce up to \(2^n\) DFA states. In practice, lexer patterns are simple and the reachable subset is small; generators build it lazily and minimize it. If an exam asks for the maximum, the answer is \(2^n\), not \(n^2\).</div>
+<div class="trap"><b>Heads-up: lexical errors are not syntax errors.</b> An illegal character or an unterminated string is lexical: no token can be formed. A missing semicolon or an unmatched parenthesis is syntactic: the tokens are fine, but their arrangement is not. A type mismatch is semantic. The phase that detects the error is part of the answer.</div>
+<h2 id="grammar">3. Grammars, derivations, and ambiguity</h2>
+<p>A lexer recognizes words. A parser recognizes sentences. The tool for describing sentences is a <b>context-free grammar</b> (CFG). It is called context-free because a nonterminal can be replaced by any of its productions no matter what surrounds it. That is exactly the right amount of power for nested expressions, statements, and blocks, and it is not enough power to enforce “this variable was declared” or “these types match” — those checks belong to semantic analysis.</p>
+
+<h3>3.1 The four parts of a grammar</h3>
+<p>A CFG is a tuple \(G=(V,T,P,S)\):</p>
+<ul class="tight">
+<li>\(V\) is a finite set of <b>nonterminals</b> (also called variables). They are the syntactic categories: expression, statement, declaration.</li>
+<li>\(T\) is a finite set of <b>terminals</b> (the tokens). \(V\cap T=\varnothing\).</li>
+<li>\(P\) is a finite set of <b>productions</b>, each of the form \(A\to\alpha\), where \(A\in V\) and \(\alpha\in(V\cup T)^*\).</li>
+<li>\(S\in V\) is the <b>start symbol</b>.</li>
+</ul>
+<p>By convention, uppercase letters near the start of the alphabet are nonterminals, lowercase letters near the end are terminals, \(S\) is the start symbol, and Greek letters stand for strings of grammar symbols. A production with the same left side can be written with alternatives: \(A\to\alpha\mid\beta\) means two productions, \(A\to\alpha\) and \(A\to\beta\).</p>
+
+<div class="q"><b>A grammar for arithmetic expressions with precedence and associativity.</b>
+<pre><code>E → E + T | T
+T → T * F | F
+F → ( E ) | id</code></pre>
+Here <code>E</code> is an expression, <code>T</code> a term, and <code>F</code> a factor. The grammar says: an expression is a sum of terms; a term is a product of factors; a factor is a parenthesized expression or an identifier. The layering is what makes <code>*</code> bind tighter than <code>+</code>. The left-recursive shape \(E\to E+T\) is what makes <code>+</code> left-associative.</div>
+
+<h3>3.2 Derivations: a proof that a string belongs</h3>
+<p>A <b>derivation</b> starts with \(S\) and repeatedly replaces a nonterminal by the right side of one of its productions. Write \(\Rightarrow\) for one step and \(\Rightarrow^*\) for zero or more steps. A string of grammar symbols that appears during a derivation is a <b>sentential form</b>; if it contains only terminals, it is a <b>sentence</b>. The language of the grammar, \(L(G)\), is the set of terminal strings derivable from \(S\).</p>
+<p>A <b>leftmost derivation</b> always replaces the leftmost nonterminal. A <b>rightmost derivation</b> always replaces the rightmost nonterminal. Both are canonical ways to record the same parse tree; the tree does not care which nonterminal you chose first.</p>
+
+<div class="q"><b>Leftmost derivation of <code>id + id * id</code>.</b>
+<pre><code>E ⇒ E + T
+  ⇒ T + T
+  ⇒ F + T
+  ⇒ id + T
+  ⇒ id + T * F
+  ⇒ id + F * F
+  ⇒ id + id * F
+  ⇒ id + id * id</code></pre>
+The corresponding parse tree:
+<pre class="tree">            E
+          / | \
+         E  +  T
+         |    /|\
+         T   T * F
+         |   |   |
+         F   F  id
+         |   |
+        id  id</pre>
+The yield of the tree, read left to right, is <code>id + id * id</code>. The tree groups the multiplication under the right operand of <code>+</code>, so the meaning is <code>id + (id * id)</code>. The grammar encoded the precedence; no separate rule was needed.</div>
+
+<p>The same string has a rightmost derivation, obtained by always expanding the rightmost nonterminal:</p>
+<div class="eq">\[ E\Rightarrow E+T\Rightarrow E+T*F\Rightarrow E+T*id\Rightarrow E+F*id\Rightarrow E+id*id\Rightarrow T+id*id\Rightarrow F+id*id\Rightarrow id+id*id \]</div>
+<p>Different derivation order, same tree. When people say “the parse tree” they mean the structural grouping; when they say “a derivation” they mean one particular order of expanding it.</p>
+
+<h3>3.3 Ambiguity: one string, two trees</h3>
+<p>A grammar is <b>ambiguous</b> if some terminal string has more than one parse tree (equivalently, more than one leftmost derivation, or more than one rightmost derivation). Ambiguity is a property of the grammar, not necessarily of the language: a language may have an unambiguous grammar and also an ambiguous one. A language is <b>inherently ambiguous</b> if every grammar for it is ambiguous.</p>
+
+<div class="q"><b>The classic ambiguous expression grammar.</b>
+<pre><code>E → E + E | E * E | ( E ) | id</code></pre>
+For <code>id + id * id</code>, there are two trees. The first groups the addition first:
+<pre class="tree">          E                 E
+        / | \             / | \
+       E  *  E           E  +  E
+     /|\     |           |    /|\
+    E + E   id          id   E * E
+    |   |                    |   |
+   id  id                   id  id</pre>
+The left tree means \((id+id)*id\); the right tree means \(id+(id*id)\). Both yields are the same terminal string, so the grammar does not tell the parser which meaning to choose. The earlier layered grammar \(E\to E+T\mid T\), \(T\to T*F\mid F\), \(F\to(E)\mid id\) has only the right-hand grouping.</div>
+
+<p>Ambiguity is not always about arithmetic. The <b>dangling else</b> is the standard statement-level example:</p>
+<pre><code>stmt → if expr then stmt
+     | if expr then stmt else stmt
+     | other</code></pre>
+<p>For</p>
+<pre><code>if E1 then if E2 then S1 else S2</code></pre>
+<p>the <code>else</code> can pair with the inner <code>if E2</code> or with the outer <code>if E1</code>. Both parse trees are legal. Most languages choose the nearest unmatched <code>then</code>, so the <code>else</code> belongs to the inner <code>if</code>. A grammar can enforce that choice by separating matched statements (which have their own <code>else</code>) from unmatched ones:</p>
+<pre><code>stmt     → matched | unmatched
+matched  → if expr then matched else matched
+         | other
+unmatched → if expr then stmt
+          | if expr then matched else unmatched</code></pre>
+<p>In this grammar, an <code>if</code> without an <code>else</code> is unmatched, and an <code>else</code> can only close a matched <code>if</code>. The outer <code>if E1</code> in the example is unmatched, and the inner one is matched. No ambiguity remains.</p>
+
+<div class="move"><b>Why ambiguity is a parsing problem, not just a style problem.</b> A parser must choose a production at each step. If two parse trees exist, the grammar gives it no deterministic choice. A parser generator may report a conflict, pick one alternative by rule order, or parse the wrong meaning silently. In a compiler, the parse tree drives code generation; two trees can produce different answers. That is why language designers either write an unambiguous grammar or add disambiguating rules (precedence, associativity, “else matches nearest if”) and prove those rules match the intended language.</div>
+
+<h3>3.4 Context-free versus regular</h3>
+<p>Every regular language is context-free, but not every context-free language is regular. The standard witness is</p>
+<div class="eq">\[ L=\{\,a^n b^n \mid n\ge 0\,\} \]</div>
+<p>A grammar for it is \(S\to aSb\mid\varepsilon\). A finite automaton cannot recognize it because it would need to remember an unbounded count of \(a\)s. A pushdown automaton can, because it has a stack; a CFG is the declarative counterpart of a pushdown automaton. This is the formal reason nested constructs — parentheses, blocks, nested function calls — need a parser and cannot be handled by a lexer alone.</p>
+
+<div class="q"><b>Nesting in a real grammar.</b> The production \(F\to(E)\) is recursive: an expression can contain an expression in parentheses, which can contain another, and so on. The recursion is what gives the grammar unbounded nesting. A regular expression can match a fixed number of parentheses or a flat sequence, but not “any number of opens followed by the same number of closes.”</div>
+
+<h3>3.5 Grammar transformations you will use later</h3>
+<p>Parsers often need a grammar in a different shape. These transformations preserve the language, but they may change the parse trees, so they must be used carefully when semantic actions depend on tree shape.</p>
+<ul class="tight">
+<li><b>Eliminate left recursion.</b> A production \(A\to A\alpha\mid\beta\) becomes \(A\to\beta A'\) and \(A'\to\alpha A'\mid\varepsilon\). This removes immediate left recursion; indirect left recursion needs a general algorithm. Top-down parsers need this because a recursive-descent procedure for \(A\) would call itself before consuming a token.</li>
+<li><b>Left-factor.</b> \(A\to\alpha\beta_1\mid\alpha\beta_2\) becomes \(A\to\alpha A'\) and \(A'\to\beta_1\mid\beta_2\). This delays the choice until the parser has seen enough input to distinguish the alternatives.</li>
+<li><b>Eliminate useless symbols.</b> Remove nonterminals that cannot derive a terminal string (non-generating) and symbols that cannot be reached from the start (unreachable). They add nothing to the language.</li>
+<li><b>Eliminate \(\varepsilon\)-productions and unit productions.</b> Useful for normal forms and some algorithms. Removing \(\varepsilon\)-productions can increase the number of productions; removing \(A\to B\) means substituting \(B\)’s productions into \(A\).</li>
+<li><b>Chomsky normal form.</b> Every production is \(A\to BC\) or \(A\to a\) (plus possibly \(S\to\varepsilon\)). It is a theoretical normal form, not usually what a hand-written parser uses.</li>
+</ul>
+
+<div class="key"><b>Key.</b> A grammar generates strings by derivation; a parse tree records the grouping; a leftmost or rightmost derivation is just a canonical order. Ambiguity means two trees for one string. Precedence, associativity, and “nearest else” are disambiguation rules, and a grammar can often encode them directly.</div>
+<div class="trap"><b>Heads-up: “the grammar is ambiguous” and “the language is ambiguous” are different claims.</b> The ambiguous expression grammar above generates the same language as the layered grammar; the language is not inherently ambiguous. Also, a grammar can be unambiguous but still not LL(1) or not LR(1); parsing power is a separate question from ambiguity.</div>
+<h2 id="topdown">4. Top-down parsing: predict the next move</h2>
+<p>A top-down parser starts at the start symbol and tries to derive the input. At each step it looks at the next input token and chooses a production for the leftmost nonterminal. If the grammar is designed well, one token is enough to choose. That is the whole idea of <b>predictive parsing</b>.</p>
+
+<h3>4.1 Recursive descent: one function per nonterminal</h3>
+<p>The most direct implementation is <b>recursive descent</b>. Each nonterminal becomes a function. The function consumes tokens that match its production and calls the functions for the nonterminals on the right side. A global variable holds the current lookahead token.</p>
+<p>Left recursion makes this scheme loop forever: a function for \(A\to A\alpha\) would call itself before consuming anything. So the first step is to rewrite the grammar without left recursion. For the expression grammar, one useful form is:</p>
+<pre><code>E  → T E'
+E' → + T E' | ε
+T  → F T'
+T' → * F T' | ε
+F  → ( E ) | id</code></pre>
+<p>Now the recursive-descent skeleton is almost a transcription:</p>
+<pre><code>void E()  { T(); Eprime(); }
+void Eprime() {
+    if (look == '+') { match('+'); T(); Eprime(); }
+    else if (look == ')' || look == '$') return;   // ε-production
+    else error();
+}
+void T()  { F(); Tprime(); }
+void Tprime() {
+    if (look == '*') { match('*'); F(); Tprime(); }
+    else if (look == '+' || look == ')' || look == '$') return;
+    else error();
+}
+void F() {
+    if (look == 'id') match('id');
+    else if (look == '(') { match('('); E(); match(')'); }
+    else error();
+}</code></pre>
+<p>The <code>else if</code> branches are the \(\varepsilon\)-productions. The parser takes an \(\varepsilon\)-production when the lookahead cannot begin the recursive alternative but can legally follow the nonterminal. That “can legally follow” set is <b>FOLLOW</b>. The set that can begin a string is <b>FIRST</b>. Those two sets are the entire decision procedure.</p>
+
+<div class="move"><b>Why one token can be enough.</b> At a nonterminal \(A\), the parser has already matched the input to the left of \(A\). The next token must be the first token of whatever \(A\) derives. If each alternative of \(A\) begins with a distinct set of tokens, the lookahead picks the alternative. If an alternative can derive \(\varepsilon\), the parser may also choose it when the next token is something that can follow \(A\). That is the LL(1) condition, stated in advance.</div>
+
+<h3>4.2 FIRST: what can a string begin with?</h3>
+<p>For a string \(\alpha\) of grammar symbols, \(\text{FIRST}(\alpha)\) is the set of terminals that can appear as the first symbol of some string derived from \(\alpha\). If \(\alpha\Rightarrow^*\varepsilon\), then \(\varepsilon\in\text{FIRST}(\alpha)\).</p>
+<p>The computation is a fixed point over the productions:</p>
+<ul class="tight">
+<li>\(\text{FIRST}(\varepsilon)=\{\varepsilon\}\).</li>
+<li>For a terminal \(a\), \(\text{FIRST}(a)=\{a\}\).</li>
+<li>For a nonterminal \(A\), add \(\text{FIRST}(\alpha)\) for every production \(A\to\alpha\). If every alternative can derive \(\varepsilon\), add \(\varepsilon\) to \(\text{FIRST}(A)\).</li>
+<li>For a string \(X_1X_2\cdots X_n\), add \(\text{FIRST}(X_1)\). If \(X_1\) is nullable, also add \(\text{FIRST}(X_2)\); if both are nullable, continue. If every \(X_i\) is nullable, add \(\varepsilon\).</li>
+</ul>
+<p>“Nullable” means “can derive \(\varepsilon\).” A nonterminal is nullable if it has a production whose right side is entirely nullable (or is \(\varepsilon\)). This is another fixed point: start with the nonterminals that have \(\varepsilon\)-productions, then propagate through productions whose right sides are all nullable.</p>
+
+<div class="q"><b>FIRST for the expression grammar.</b>
+<pre><code>FIRST(F)  = { (, id }
+FIRST(T)  = { (, id }
+FIRST(E)  = { (, id }
+FIRST(E') = { +, ε }
+FIRST(T') = { *, ε }</code></pre>
+Why: \(F\to(E)\mid id\), so its first tokens are <code>(</code> and <code>id</code>. \(T\to F T'\), and \(F\) is not nullable, so \(T\) begins exactly like \(F\). The same argument gives \(E\). \(E'\) has alternatives \(+TE'\) and \(\varepsilon\), so its FIRST is \(\{+\}\cup\{\varepsilon\}\). \(T'\) is analogous with \(*\).</div>
+
+<h3>4.3 FOLLOW: what can come after a nonterminal?</h3>
+<p>\(\text{FOLLOW}(A)\) is the set of terminals that can appear immediately to the right of \(A\) in some sentential form derived from the start symbol. If \(A\) can be at the end of the input, the end marker \(\$\) is in \(\text{FOLLOW}(A)\). FOLLOW never contains \(\varepsilon\); it contains terminals and \(\$\).</p>
+<p>The rules:</p>
+<ul class="tight">
+<li>Put \(\$\) in \(\text{FOLLOW}(S)\) for the start symbol \(S\).</li>
+<li>For every production \(A\to\alpha B\beta\), put \(\text{FIRST}(\beta)-\{\varepsilon\}\) into \(\text{FOLLOW}(B)\).</li>
+<li>For every production \(A\to\alpha B\beta\) where \(\beta\Rightarrow^*\varepsilon\), put \(\text{FOLLOW}(A)\) into \(\text{FOLLOW}(B)\). The same applies to \(A\to\alpha B\) (take \(\beta=\varepsilon\)).</li>
+</ul>
+<p>Read the second rule as: “\(B\) is followed by whatever can begin \(\beta\).” Read the third as: “if \(\beta\) can vanish, \(B\) is followed by whatever follows \(A\).” Iterate until no set changes.</p>
+
+<div class="q"><b>FOLLOW for the expression grammar.</b>
+<pre><code>FOLLOW(E)  = { ), $ }
+FOLLOW(E') = { ), $ }
+FOLLOW(T)  = { +, ), $ }
+FOLLOW(T') = { +, ), $ }
+FOLLOW(F)  = { *, +, ), $ }</code></pre>
+Derivation of the less obvious ones:
+<ul class="tight">
+<li>\(E\) is the start, so \(\$\) is in FOLLOW(E). The production \(F\to(E)\) puts \()\) after \(E\).</li>
+<li>\(E'\) appears at the end of \(E\to T E'\), so FOLLOW(E) flows into FOLLOW(E'). The production \(E'\to+TE'\) has \(E'\) at the end again; no new terminals.</li>
+<li>\(T\) appears in \(E\to T E'\). It is followed by \(E'\), whose FIRST is \(\{+,\varepsilon\}\); add \(+\). Since \(E'\) is nullable, also add FOLLOW(E) \(=\{), \$\}\).</li>
+<li>\(T'\) appears at the end of \(T\to F T'\), so FOLLOW(T) flows into FOLLOW(T'). The production \(T'\to*FT'\) keeps \(T'\) at the end; no new terminals.</li>
+<li>\(F\) appears in \(T\to F T'\). It is followed by \(T'\), whose FIRST is \(\{*,\varepsilon\}\); add \(*\). Since \(T'\) is nullable, add FOLLOW(T) \(=\{+,), \$\}\).</li>
+</ul></div>
+
+<div class="key"><b>Key.</b> FIRST answers “what can this string start with?” and may contain \(\varepsilon\). FOLLOW answers “what can come after this nonterminal?” and never contains \(\varepsilon\). A nullable nonterminal needs FOLLOW to decide when to take its \(\varepsilon\)-production.</div>
+<div class="trap"><b>Heads-up: FOLLOW is not “the set of all tokens that ever appear after A in the grammar text.”</b> It is computed from the start symbol and propagates through nullable suffixes. A token that appears after \(A\) in one production may not be in FOLLOW(A) if that context is unreachable, and a token can be in FOLLOW(A) because of a chain of nullable symbols. Use the rules, not intuition.</div>
+<h3>4.4 The LL(1) table: turn decisions into a lookup</h3>
+<p>An LL(1) parser can be implemented as a table \(M[A,a]\), where \(A\) is a nonterminal and \(a\) is the current lookahead token. The entry is the production to use, or an error. The table is built directly from FIRST and FOLLOW:</p>
+<ul class="tight">
+<li>For each production \(A\to\alpha\) and each terminal \(a\in\text{FIRST}(\alpha)\), put \(A\to\alpha\) in \(M[A,a]\).</li>
+<li>If \(\varepsilon\in\text{FIRST}(\alpha)\), then for each \(b\in\text{FOLLOW}(A)\), put \(A\to\alpha\) in \(M[A,b]\).</li>
+</ul>
+<p>If any cell receives two different productions, the grammar is not LL(1). That is the table form of the LL(1) condition: alternatives must have disjoint FIRST sets, and any nullable alternative must not overlap with FOLLOW.</p>
+
+<div class="q"><b>The LL(1) table for the expression grammar.</b> Blank cells are errors.
+<div class="table-wrap"><table>
+<tr><th></th><th><code>id</code></th><th><code>(</code></th><th><code>)</code></th><th><code>+</code></th><th><code>*</code></th><th><code>$</code></th></tr>
+<tr><td><b>E</b></td><td>E→T E′</td><td>E→T E′</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><b>E′</b></td><td></td><td></td><td>E′→ε</td><td>E′→+T E′</td><td></td><td>E′→ε</td></tr>
+<tr><td><b>T</b></td><td>T→F T′</td><td>T→F T′</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><b>T′</b></td><td></td><td></td><td>T′→ε</td><td>T′→ε</td><td>T′→*F T′</td><td>T′→ε</td></tr>
+<tr><td><b>F</b></td><td>F→id</td><td>F→(E)</td><td></td><td></td><td></td><td></td></tr>
+</table></div>
+Check one entry: \(E'\to\varepsilon\) appears under \()\) and \(\$\) because FOLLOW(E′) \(=\{), \$\}\). It does not appear under \(+\), because \(+\) is in FIRST(+T E′), so the recursive production wins there. It does not appear under \(*\) or \(id\), because those cannot follow \(E'\) in this grammar.</div>
+
+<h3>4.5 A full LL(1) parse, stack and all</h3>
+<p>The table-driven parser keeps a stack whose bottom is \(\$\) and whose top is the next symbol to expand or match. Initially the stack is \(\$E\). The input ends with \(\$\). At each step:</p>
+<ul class="tight">
+<li>If the top is a terminal and matches the lookahead, pop it and advance the input.</li>
+<li>If the top is a nonterminal \(A\), look up \(M[A,\text{lookahead}]\) and replace \(A\) by the right side of that production, reversed so the leftmost symbol is on top.</li>
+<li>If the top is \(\$\) and the lookahead is \(\$\), accept.</li>
+<li>Otherwise, report a syntax error.</li>
+</ul>
+
+<div class="q"><b>Parse <code>id + id * id</code>.</b> The stack is written with its top at the right.
+<div class="table-wrap"><table>
+<tr><th>Step</th><th>Stack (top right)</th><th>Input</th><th>Action</th></tr>
+<tr><td>0</td><td><code>$ E</code></td><td><code>id + id * id $</code></td><td>E→T E′</td></tr>
+<tr><td>1</td><td><code>$ E′ T</code></td><td><code>id + id * id $</code></td><td>T→F T′</td></tr>
+<tr><td>2</td><td><code>$ E′ T′ F</code></td><td><code>id + id * id $</code></td><td>F→id</td></tr>
+<tr><td>3</td><td><code>$ E′ T′ id</code></td><td><code>id + id * id $</code></td><td>match id</td></tr>
+<tr><td>4</td><td><code>$ E′ T′</code></td><td><code>+ id * id $</code></td><td>T′→ε</td></tr>
+<tr><td>5</td><td><code>$ E′</code></td><td><code>+ id * id $</code></td><td>E′→+T E′</td></tr>
+<tr><td>6</td><td><code>$ E′ T +</code></td><td><code>+ id * id $</code></td><td>match +</td></tr>
+<tr><td>7</td><td><code>$ E′ T</code></td><td><code>id * id $</code></td><td>T→F T′</td></tr>
+<tr><td>8</td><td><code>$ E′ T′ F</code></td><td><code>id * id $</code></td><td>F→id</td></tr>
+<tr><td>9</td><td><code>$ E′ T′ id</code></td><td><code>id * id $</code></td><td>match id</td></tr>
+<tr><td>10</td><td><code>$ E′ T′</code></td><td><code>* id $</code></td><td>T′→*F T′</td></tr>
+<tr><td>11</td><td><code>$ E′ T′ F *</code></td><td><code>* id $</code></td><td>match *</td></tr>
+<tr><td>12</td><td><code>$ E′ T′ F</code></td><td><code>id $</code></td><td>F→id</td></tr>
+<tr><td>13</td><td><code>$ E′ T′ id</code></td><td><code>id $</code></td><td>match id</td></tr>
+<tr><td>14</td><td><code>$ E′ T′</code></td><td><code>$</code></td><td>T′→ε</td></tr>
+<tr><td>15</td><td><code>$ E′</code></td><td><code>$</code></td><td>E′→ε</td></tr>
+<tr><td>16</td><td><code>$</code></td><td><code>$</code></td><td>accept</td></tr>
+</table></div>
+The parser never guessed. Each decision came from one lookahead token and the table. The two \(\varepsilon\)-productions were taken exactly when the lookahead was in FOLLOW, not because the parser “felt finished.”</div>
+
+<h3>4.6 Left recursion: why it breaks top-down, and how to remove it</h3>
+<p>A production \(A\to A\alpha\) is <b>immediately left-recursive</b>. A recursive-descent parser for \(A\) would call \(A\) again before consuming a token, so it would recurse forever. Indirect left recursion, such as \(A\to B\alpha\), \(B\to A\beta\), has the same effect through a cycle.</p>
+<p>The immediate case has a mechanical rewrite:</p>
+<div class="eq">\[ A\to A\alpha\mid\beta \quad\Longrightarrow\quad A\to\beta A',\qquad A'\to\alpha A'\mid\varepsilon \]</div>
+<p>Here \(\beta\) is any alternative that does not begin with \(A\). The new nonterminal \(A'\) consumes zero or more repetitions of \(\alpha\). For the expression grammar:</p>
+<div class="eq">\[ E\to E+T\mid T \quad\Longrightarrow\quad E\to T E',\qquad E'\to+T E'\mid\varepsilon \]</div>
+<p>The same rewrite on \(T\to T*F\mid F\) gives \(T\to F T'\), \(T'\to*F T'\mid\varepsilon\). This is exactly the grammar used in the recursive-descent code above.</p>
+
+<p>For indirect left recursion, order the nonterminals \(A_1,\ldots,A_n\) and eliminate in that order. For each \(A_i\), first replace any production \(A_i\to A_j\gamma\) with \(j&lt;i\) by substituting all current \(A_j\)-productions, then eliminate immediate left recursion for \(A_i\). After the loop, no production begins with a nonterminal that can eventually lead back to its left side. The algorithm assumes there are no cycles \(A\Rightarrow^+A\) and no \(\varepsilon\)-productions that create them; remove those first if necessary.</p>
+
+<div class="trap"><b>Heads-up: removing left recursion changes the parse tree, not just the notation.</b> The original \(E\to E+T\) builds a left-leaning tree that naturally means \((a+b)+c\). The rewritten grammar builds a right-leaning tree with an \(E'\) tail. If your semantic actions assume the original shape, you must adapt them (for example, pass an accumulated value through an inherited attribute). The language is the same; the tree is not.</div>
+
+<h3>4.7 Left factoring: delay the choice until you can make it</h3>
+<p>Two alternatives with a common prefix make the FIRST sets overlap. The parser sees the prefix and cannot tell which alternative to choose. <b>Left factoring</b> pulls the common prefix out:</p>
+<div class="eq">\[ A\to\alpha\beta_1\mid\alpha\beta_2 \quad\Longrightarrow\quad A\to\alpha A',\qquad A'\to\beta_1\mid\beta_2 \]</div>
+<p>For example, if a statement can be an assignment or a call, both beginning with an identifier:</p>
+<pre><code>stmt → id = expr ;
+     | id ( args ) ;</code></pre>
+<p>factor to</p>
+<pre><code>stmt  → id stmt'
+stmt' → = expr ;
+      | ( args ) ;</code></pre>
+<p>The parser consumes <code>id</code> first, then decides from the next token. With more than two alternatives, factor the longest common prefixes repeatedly. Left factoring is necessary for LL(1) in many grammars, but it is not sufficient by itself: the resulting grammar can still have FIRST/FOLLOW overlaps, and it can still be ambiguous. The dangling-else grammar, for instance, has a common prefix but needs a disambiguation rule, not just factoring.</p>
+
+<h3>4.8 Errors in top-down parsing</h3>
+<p>When the table entry is blank or a terminal does not match, the parser has a syntax error. A simple recovery is <b>panic mode</b>: pop the stack until the top is a nonterminal whose FOLLOW set contains the lookahead, or until the lookahead is a token that can restart the parse (a semicolon, a closing brace, or end of file). Then skip input tokens until one is in that sync set. This lets the parser report several errors instead of stopping at the first one.</p>
+<p>A more precise approach is <b>phrase-level recovery</b>: add explicit error productions for common mistakes, such as a missing semicolon or a missing closing parenthesis. The parser then has a legal action for the erroneous input and can continue. Parser generators often support an <code>error</code> token for this purpose.</p>
+
+<div class="key"><b>Key.</b> LL(1) means left-to-right scan, leftmost derivation, one lookahead token. Build FIRST and FOLLOW, fill the table, and parse with a stack. Left recursion must be removed; common prefixes should be factored; nullable alternatives are chosen on FOLLOW.</div>
+<div class="trap"><b>Heads-up: “no left recursion and no common prefixes” does not guarantee LL(1).</b> Two alternatives can have disjoint FIRST sets and still conflict through FOLLOW if one is nullable, and a grammar can have hidden overlaps after several symbols. The table is the test: one production per cell, or it is not LL(1).</div>
+<div class="trap"><b>Heads-up: left recursion is not “bad grammar.”</b> It is bad for top-down parsing and fine for bottom-up parsing. LR parsers handle \(E\to E+T\) directly and often more naturally than the transformed grammar. The right question is “which parser?” not “which grammar is universally correct?”</div>
+<h2 id="bottomup">5. Bottom-up parsing: shift, reduce, and LR</h2>
+<p>A bottom-up parser starts with the input tokens and reduces them back to the start symbol. It reads left to right, and the sequence of reductions is a rightmost derivation in reverse. The family of parsers that do this with a stack and a deterministic table is the <b>LR</b> family. LR parsers are the industrial default because they handle left recursion, a large class of grammars, and precise lookahead without backtracking.</p>
+
+<h3>5.1 Shift-reduce parsing: the stack story</h3>
+<p>A shift-reduce parser has a stack and an input stream. It performs four kinds of actions:</p>
+<ul class="tight">
+<li><b>Shift:</b> move the next input token onto the stack.</li>
+<li><b>Reduce:</b> replace the right side of a production on top of the stack by its left side. For example, if the stack ends in <code>id</code> and the grammar has \(T\to id\), replace <code>id</code> by \(T\).</li>
+<li><b>Accept:</b> the stack contains the start symbol and the input is exhausted.</li>
+<li><b>Error:</b> no legal action.</li>
+</ul>
+<p>The string on top of the stack that matches a production’s right side is a <b>handle</b>. The stack always holds a <b>viable prefix</b>: a prefix of a right sentential form that can still be extended to a complete reduction. The parser’s job is to find the handle and reduce it at the right time.</p>
+
+<div class="q"><b>A tiny trace.</b> Grammar: \(E\to E+T\mid T\), \(T\to id\). Input: <code>id + id</code>.
+<pre><code>Stack              Input          Action
+$                  id + id $      shift id
+$ id               + id $         reduce T → id
+$ T                + id $         reduce E → T
+$ E                + id $         shift +
+$ E +              id $           shift id
+$ E + id           $              reduce T → id
+$ E + T            $              reduce E → E + T
+$ E                $              accept</code></pre>
+The reductions, read in order, are \(T\to id\), \(E\to T\), \(T\to id\), \(E\to E+T\). Reversing them gives a rightmost derivation of the input from \(E\).</div>
+
+<p>Two questions remain: how does the parser know when to shift versus reduce, and which production to reduce? The LR construction answers both by building a finite automaton whose states summarize “how much of which productions we have seen.”</p>
+
+<h3>5.2 LR(0) items: a production with a dot</h3>
+<p>An <b>LR(0) item</b> is a production with a dot somewhere on the right side. The dot marks how much of the right side has already been recognized. For \(E\to E+T\), the four items are</p>
+<div class="eq">\[ E\to \cdot E+T,\qquad E\to E\cdot+T,\qquad E\to E+\cdot T,\qquad E\to E+T\cdot \]</div>
+<p>The first says “we are about to look for an \(E\), then \(+\), then \(T\).” The last says “we have recognized the whole right side; we may reduce.” The dot can also be at the end of an \(\varepsilon\)-production: \(A\to\cdot\) means “the empty right side is already recognized.”</p>
+<p>The <b>closure</b> of a set of items adds items for nonterminals that appear immediately after a dot. If \(A\to\alpha\cdot B\beta\) is in the set, then every production \(B\to\gamma\) contributes \(B\to\cdot\gamma\). Repeat until no new items. Intuitively, if the parser is about to look for a \(B\), it must be prepared to start any production for \(B\).</p>
+<p>The <b>goto</b> function moves the dot over a grammar symbol \(X\): from all items \(A\to\alpha\cdot X\beta\), form \(A\to\alpha X\cdot\beta\), then take the closure. The canonical collection of LR(0) item sets is built by starting from the closure of the augmented start item \(S'\to\cdot S\) and repeatedly applying goto for every grammar symbol.</p>
+
+<div class="q"><b>LR(0) automaton for \(E\to E+T\mid T\), \(T\to id\).</b> Augment the grammar with \(E'\to E\).
+<div class="table-wrap"><table>
+<tr><th>State</th><th>Items</th><th>Transitions</th></tr>
+<tr><td>\(I_0\)</td><td>\(E'\to\cdot E\); \(E\to\cdot E+T\); \(E\to\cdot T\); \(T\to\cdot id\)</td><td>\(E\to I_1\), \(T\to I_2\), \(id\to I_3\)</td></tr>
+<tr><td>\(I_1\)</td><td>\(E'\to E\cdot\); \(E\to E\cdot+T\)</td><td>\(+\to I_4\)</td></tr>
+<tr><td>\(I_2\)</td><td>\(E\to T\cdot\)</td><td>—</td></tr>
+<tr><td>\(I_3\)</td><td>\(T\to id\cdot\)</td><td>—</td></tr>
+<tr><td>\(I_4\)</td><td>\(E\to E+\cdot T\); \(T\to\cdot id\)</td><td>\(T\to I_5\), \(id\to I_3\)</td></tr>
+<tr><td>\(I_5\)</td><td>\(E\to E+T\cdot\)</td><td>—</td></tr>
+</table></div>
+The dot in \(I_1\) has moved past \(E\), so the parser has recognized an \(E\) and may either finish (if the next token is \(\$\)) or continue with \(+T\). The dot in \(I_4\) is just before \(T\), so the parser expects a \(T\) or the beginning of one, namely <code>id</code>.</div>
+
+<h3>5.3 SLR tables: use FOLLOW to decide reductions</h3>
+<p>A state containing a completed item \(A\to\alpha\cdot\) is a candidate for reduction. In the simplest LR(0) table, it would reduce on every lookahead, which causes many conflicts. <b>Simple LR</b> (SLR) restricts the reduction to the lookaheads in \(\text{FOLLOW}(A)\). The table has two parts:</p>
+<ul class="tight">
+<li><b>ACTION[state, terminal]:</b> shift to a state, reduce by a production, accept, or error.</li>
+<li><b>GOTO[state, nonterminal]:</b> the state to enter after a reduction exposes that nonterminal.</li>
+</ul>
+<p>For our grammar, \(\text{FOLLOW}(E)=\{+,\$\}\) and \(\text{FOLLOW}(T)=\{+,\$\}\). The SLR table is:</p>
+<div class="table-wrap"><table>
+<tr><th>State</th><th><code>id</code></th><th><code>+</code></th><th><code>$</code></th><th><code>E</code></th><th><code>T</code></th></tr>
+<tr><td>0</td><td>shift 3</td><td></td><td></td><td>goto 1</td><td>goto 2</td></tr>
+<tr><td>1</td><td></td><td>shift 4</td><td>accept</td><td></td><td></td></tr>
+<tr><td>2</td><td></td><td>reduce \(E\to T\)</td><td>reduce \(E\to T\)</td><td></td><td></td></tr>
+<tr><td>3</td><td></td><td>reduce \(T\to id\)</td><td>reduce \(T\to id\)</td><td></td><td></td></tr>
+<tr><td>4</td><td>shift 3</td><td></td><td></td><td></td><td>goto 5</td></tr>
+<tr><td>5</td><td></td><td>reduce \(E\to E+T\)</td><td>reduce \(E\to E+T\)</td><td></td><td></td></tr>
+</table></div>
+<p>No cell has two actions, so this grammar is SLR(1). Notice that the grammar is left-recursive; the LR automaton handles it directly. That is one of the practical advantages of bottom-up parsing.</p>
+
+<div class="q"><b>LR parse of <code>id + id + id</code>.</b> The stack alternates states and grammar symbols; only states are needed for table lookup, but showing both is clearer.
+<div class="table-wrap"><table>
+<tr><th>Stack</th><th>Input</th><th>Action</th></tr>
+<tr><td>0</td><td>id + id + id $</td><td>shift 3</td></tr>
+<tr><td>0 id 3</td><td>+ id + id $</td><td>reduce \(T\to id\)</td></tr>
+<tr><td>0 T 2</td><td>+ id + id $</td><td>reduce \(E\to T\)</td></tr>
+<tr><td>0 E 1</td><td>+ id + id $</td><td>shift 4</td></tr>
+<tr><td>0 E 1 + 4</td><td>id + id $</td><td>shift 3</td></tr>
+<tr><td>0 E 1 + 4 id 3</td><td>+ id $</td><td>reduce \(T\to id\)</td></tr>
+<tr><td>0 E 1 + 4 T 5</td><td>+ id $</td><td>reduce \(E\to E+T\)</td></tr>
+<tr><td>0 E 1</td><td>+ id $</td><td>shift 4</td></tr>
+<tr><td>0 E 1 + 4</td><td>id $</td><td>shift 3</td></tr>
+<tr><td>0 E 1 + 4 id 3</td><td>$</td><td>reduce \(T\to id\)</td></tr>
+<tr><td>0 E 1 + 4 T 5</td><td>$</td><td>reduce \(E\to E+T\)</td></tr>
+<tr><td>0 E 1</td><td>$</td><td>accept</td></tr>
+</table></div>
+At a reduction by \(A\to\beta\), the parser pops \(2|\beta|\) symbols (grammar symbols and states), then uses the exposed state and \(A\) in GOTO to find the next state. Here, reducing \(T\to id\) pops <code>id 3</code>, exposes state 0, and GOTO(0,T)=2. Reducing \(E\to E+T\) pops <code>E 1 + 4 T 5</code>, exposes state 0, and GOTO(0,E)=1.</div>
+
+<div class="key"><b>Key.</b> LR parsing is left-to-right scanning with a rightmost derivation in reverse. The stack is a viable prefix; the table decides shift, reduce, accept, or error. SLR uses FOLLOW as the reduce lookahead.</div>
+<div class="trap"><b>Heads-up: “reduce” does not mean “replace the first matching symbols anywhere.”</b> It means replace the handle on top of the stack. The stack must end with the production’s right side. If it does not, the parser is in the wrong state, even if the same symbols appear earlier.</div>
+<h3>5.4 Why SLR is not the end: lookahead can be too coarse</h3>
+<p>SLR reduces \(A\to\alpha\) whenever the lookahead is anywhere in \(\text{FOLLOW}(A)\). FOLLOW is a global set: it says a token can follow \(A\) somewhere, not that it can follow \(A\) in this particular state. That over-approximation can create a conflict in a grammar that is perfectly unambiguous.</p>
+<div class="q"><b>The classic SLR conflict.</b> Grammar:
+<pre><code>S → L = R | R
+L → * R | id
+R → L</code></pre>
+After seeing an \(L\), the LR(0) state contains both \(S\to L\cdot=R\) and \(R\to L\cdot\). The first item wants to shift \(=\). The second wants to reduce \(R\to L\). Since \(\text{FOLLOW}(L)=\{=,\$\}\), SLR allows the reduction on \(=\), so the state has a shift/reduce conflict on \(=\). The language is not ambiguous: after an \(L\) that came from the start symbol, \(=\) must continue an assignment; after an \(L\) that came from \(*R\), \(=\) may follow the inner \(R\). SLR cannot see that difference.</div>
+
+<h3>5.5 Canonical LR(1): carry the exact lookahead</h3>
+<p>An <b>LR(1) item</b> is a pair \([A\to\alpha\cdot\beta,\ a]\), where \(a\) is a terminal or the end marker \(\$\). The dot says how much has been recognized; the lookahead says which token is allowed to follow this occurrence of \(A\) when the item is completed. The closure rule is:</p>
+<div class="eq">\[ \text{if }[A\to\alpha\cdot B\beta,\ a]\in I,\ \text{then for every }B\to\gamma\text{ and every }b\in\text{FIRST}(\beta a),\ \text{add }[B\to\cdot\gamma,\ b]. \]</div>
+<p>The only change from LR(0) is the lookahead: the new item’s lookahead is a terminal that can begin \(\beta a\). Goto carries the lookaheads along. A completed item \([A\to\alpha\cdot,\ a]\) reduces only when the actual lookahead is \(a\).</p>
+<p>For the assignment grammar, the state after \(L\) contains \([S\to L\cdot=R,\ \$]\) and \([R\to L\cdot,\ \$]\). The reduction is allowed only on \(\$\), not on \(=\). The shift on \(=\) is therefore unambiguous. The conflict is gone.</p>
+<p>The price is size. Canonical LR(1) can have many more states than SLR, because the same LR(0) core can appear with different lookahead sets. A large programming-language grammar can produce thousands of states.</p>
+
+<h3>5.6 LALR: merge states with the same core</h3>
+<p><b>LALR(1)</b> (“lookahead LR”) takes the canonical LR(1) automaton and merges any two states that have the same LR(0) core — the same items with the dots, ignoring lookaheads. The merged state’s lookahead for an item is the union of the lookaheads from the merged states. The result is usually close to SLR in size and close to LR(1) in power.</p>
+<p>Merging can create a <b>reduce/reduce</b> conflict: two different productions may become reducible on the same lookahead after their lookahead sets are unioned. It cannot create a brand-new shift/reduce conflict, because the shift actions are determined by the core and are identical in states with the same core. If a shift/reduce conflict appears after merging, it was already present in one of the original states.</p>
+<div class="q"><b>An LR(1) grammar that is not LALR(1).</b>
+<pre><code>S → a A d | b A e | a B e | b B d
+A → c
+B → c</code></pre>
+After <code>a c</code>, the parser needs to choose \(A\to c\) if the next token is \(d\), and \(B\to c\) if the next token is \(e\). After <code>b c</code>, the choices reverse. Canonical LR(1) keeps separate states for the two contexts. LALR merges the two \(c\)-states because their cores are the same \(\{A\to c\cdot,\ B\to c\cdot\}\), and the union of lookaheads makes both reductions legal on both \(d\) and \(e\). That is a reduce/reduce conflict. The grammar is LR(1), but not LALR(1).</div>
+
+<h3>5.7 The LR family at a glance</h3>
+<div class="table-wrap"><table>
+<tr><th>Parser</th><th>Lookahead used for reduction</th><th>Relative power</th><th>Typical use</th></tr>
+<tr><td>LR(0)</td><td>None; reduce on every token</td><td>Weakest; many conflicts</td><td>Teaching, simple automata</td></tr>
+<tr><td>SLR(1)</td><td>FOLLOW(A)</td><td>Stronger than LR(0)</td><td>Simple hand-built tables</td></tr>
+<tr><td>LALR(1)</td><td>Merged LR(1) lookaheads</td><td>Between SLR and LR(1)</td><td>Yacc, Bison, many real parsers</td></tr>
+<tr><td>Canonical LR(1)</td><td>Exact item lookahead</td><td>Strongest</td><td>When LALR conflicts are unacceptable</td></tr>
+</table></div>
+<p>The inclusions are strict: \(\text{LR(0)}\subset\text{SLR(1)}\subset\text{LALR(1)}\subset\text{LR(1)}\). “Stronger” means “accepts more grammars without conflicts,” not “accepts more languages.” All of these parsers accept only deterministic context-free languages; canonical LR(1) accepts every deterministic context-free language, while the weaker table constructions accept fewer grammars for the same language.</p>
+
+<h3>5.8 Conflicts, and how to resolve them honestly</h3>
+<p>A conflict is a cell where the table wants two different actions. There are two kinds:</p>
+<ul class="tight">
+<li><b>Shift/reduce:</b> the state can shift the lookahead or reduce a completed production on that lookahead. Common causes: an ambiguous grammar (dangling else, unlayered expressions) or a grammar that is not LR.</li>
+<li><b>Reduce/reduce:</b> two completed productions can reduce on the same lookahead. Common causes: an ambiguous grammar, inadequate lookahead, or LALR merging.</li>
+</ul>
+<p>There are three honest ways to handle a conflict:</p>
+<ol class="tight">
+<li><b>Rewrite the grammar</b> so the choice is encoded structurally. This is the cleanest and the most portable. The matched/unmatched grammar for dangling else is an example.</li>
+<li><b>Add precedence and associativity declarations.</b> This tells the parser how to choose in a shift/reduce conflict without rewriting the grammar. It is standard in Yacc/Bison.</li>
+<li><b>Use the parser generator’s default.</b> Yacc/Bison shift by default on shift/reduce, and choose the earlier rule on reduce/reduce. This is sometimes acceptable, but it is a decision you must understand and document; a silent default can hide a real ambiguity.</li>
+</ol>
+
+<div class="q"><b>Precedence and associativity on the ambiguous expression grammar.</b> Grammar: \(E\to E+E\mid E*E\mid id\). Declare <code>+</code> and <code>-</code> left-associative and lower, <code>*</code> and <code>/</code> left-associative and higher. In a state with a completed \(E\to E+E\cdot\):
+<ul class="tight">
+<li>Lookahead \(*\): \(*\) has higher precedence than the production’s operator \(+\), so <b>shift</b>. This makes \(*\) bind tighter.</li>
+<li>Lookahead \(+\): equal precedence, left-associative, so <b>reduce</b>. This makes \(+\) left-associative.</li>
+<li>Lookahead \(\$\): reduce, because there is no operator to shift.</li>
+</ul>
+In a state with \(E\to E*E\cdot\), lookahead \(+\) has lower precedence, so <b>reduce</b>; lookahead \(*\) has equal precedence and left associativity, so <b>reduce</b>. A right-associative operator such as exponentiation would shift on equal precedence instead.</div>
+
+<p>In Yacc/Bison, precedence declarations are listed from lowest to highest: <code>%left '+' '-'</code>, then <code>%left '*' '/'</code>, then <code>%right '^'</code>. A production’s precedence is the precedence of its rightmost terminal, unless <code>%prec</code> overrides it. On a shift/reduce conflict, compare the lookahead token’s precedence with the production’s precedence: higher token precedence means shift; lower means reduce; equal means use associativity (left: reduce, right: shift, nonassociative: error).</p>
+
+<h3>5.9 The dangling else in an LR parser</h3>
+<p>The grammar</p>
+<pre><code>stmt → if expr then stmt
+     | if expr then stmt else stmt
+     | other</code></pre>
+<p>has a shift/reduce conflict on <code>else</code>: after <code>if expr then stmt</code>, the parser can shift <code>else</code> (attach it to this <code>if</code>) or reduce the inner <code>stmt</code> (attach it to an outer <code>if</code>). The default shift resolves it to the nearest unmatched <code>if</code>, which is what most languages want. If the language wanted the other rule, the default would be wrong. The structural fix is the matched/unmatched grammar from Section 3; it removes the conflict instead of hiding it.</p>
+
+<div class="key"><b>Key.</b> LR(0) items track the dot; SLR reduces on FOLLOW; canonical LR(1) attaches an exact lookahead to each item; LALR merges same-core LR(1) states. Power: LR(0) ⊂ SLR ⊂ LALR ⊂ LR(1). Resolve conflicts by rewriting, by precedence, or by a deliberate default — never by pretending the conflict is not there.</div>
+<div class="trap"><b>Heads-up: a conflict-free table is not proof that the grammar matches the language you intended.</b> A parser generator can resolve a conflict silently and produce a parser for a different language than you had in mind. Check the parse of the tricky sentence (the dangling else, the unary minus, the exponent’s associativity), not just the absence of warnings.</div>
+<div class="trap"><b>Heads-up: LALR is not “LR(1) with fewer states and no downside.”</b> The merging can turn a pair of precise LR(1) states into a reduce/reduce conflict. If that happens, use canonical LR(1), rewrite the grammar, or use a tool that supports IELR/other refinements. The trade-off is real.</div>
+<h2 id="sdt">6. Syntax-directed translation: attach meaning to the tree</h2>
+<p>Parsing tells you the shape of the program. Syntax-directed translation tells you what the shape means. The idea is simple: give each grammar symbol some <b>attributes</b> (a value, a type, a place in the symbol table, a piece of generated code), and attach <b>semantic rules</b> to productions saying how to compute the attributes of the left side from the attributes of the right side. Walk the parse tree, evaluate the rules, and the meaning falls out.</p>
+
+<h3>6.1 Attributes, semantic rules, and annotated trees</h3>
+<p>A <b>syntax-directed definition</b> (SDD) is a context-free grammar plus, for each production, a set of semantic rules. Each rule defines an attribute of a grammar symbol in that production. The attributes of a node in the parse tree are written next to the node; the result is an <b>annotated parse tree</b>.</p>
+<div class="q"><b>A desk calculator.</b>
+<pre><code>E → E1 + T    { E.val = E1.val + T.val }
+E → T         { E.val = T.val }
+T → T1 * F    { T.val = T1.val * F.val }
+T → F         { T.val = F.val }
+F → ( E )     { F.val = E.val }
+F → digit     { F.val = digit.lexval }</code></pre>
+For <code>3 * 5 + 4</code>, the annotated tree evaluates bottom-up:
+<pre class="tree">E.val = 19
+├── E.val = 15
+│   └── T.val = 15
+│       ├── T.val = 3
+│       │   └── F.val = 3
+│       │       └── digit 3
+│       ├── *
+│       └── F.val = 5
+│           └── digit 5
+├── +
+└── T.val = 4
+    └── F.val = 4
+        └── digit 4</pre>
+The multiplication happens first because the \(T\) subtree is below the \(E\) subtree; the addition combines 15 and 4. The tree shape encoded precedence, and the semantic rules only did arithmetic.</div>
+
+<p>The attribute <code>val</code> here is <b>synthesized</b>: its value at a node is computed from the values of the node’s children. Synthesized attributes flow upward. An <b>inherited</b> attribute flows downward or sideways: its value at a node is computed from the parent or from siblings. Inherited attributes are how a tree passes context down, such as “the declared type of this list is float” or “the type expected here is int.”</p>
+
+<h3>6.2 Inherited attributes: passing context down</h3>
+<p>A classic example is a declaration such as <code>float x, y</code>. The type is written once on the left, but every identifier in the list needs it. The type flows down the list through an inherited attribute.</p>
+<pre><code>D → T L          { L.in = T.type }
+T → int          { T.type = int }
+T → float        { T.type = float }
+L → L1 , id      { L1.in = L.in;
+                   addtype(id.entry, L.in) }
+L → id           { addtype(id.entry, L.in) }</code></pre>
+<p>For <code>float x, y</code>, the root \(D\) gives \(L\) the inherited value <code>float</code>. The list node passes the same value to its left sibling \(L_1\), and each identifier is entered into the symbol table with that type. The parse tree is the same as before; the annotations are what changed.</p>
+
+<div class="move"><b>How to tell synthesized from inherited.</b> Ask: “Whose information does this attribute need?” If it needs only the children, it is synthesized. If it needs the parent or a sibling, it is inherited. In a production \(A\to X_1\cdots X_n\), a synthesized attribute of \(A\) is defined by a rule on \(A\); an inherited attribute of \(X_i\) is defined by a rule on \(X_i\) using attributes of \(A\) or of \(X_1,\ldots,X_{i-1}\).</div>
+
+<h3>6.3 Dependency graphs and evaluation order</h3>
+<p>Each attribute occurrence in the parse tree is a node in a <b>dependency graph</b>. If the rule for attribute \(b\) uses attribute \(a\), draw an edge \(a\to b\): \(b\) depends on \(a\). A valid evaluation order is any topological order of this graph: evaluate a node only after all its predecessors. If the graph has a cycle, the SDD is circular and has no static evaluation order.</p>
+<div class="q"><b>Dependencies for <code>3 * 5 + 4</code>.</b> The value of the root \(E\) depends on the values of its \(E_1\) and \(T\). The value of \(E_1\) depends on its \(T_1\) and \(F\). The value of \(T_1\) depends on the digit 3, and \(F\) on the digit 5. A topological order evaluates the digits first, then the inner \(T\), then \(E_1\), then the outer \(T\), then the root. Any order that respects those edges is correct.</div>
+<p>For a large tree, the compiler does not usually build the dependency graph explicitly. It uses a grammar class whose shape guarantees an order: S-attributed definitions evaluate bottom-up; L-attributed definitions evaluate left-to-right depth-first. Those two classes cover most practical translations.</p>
+
+<h3>6.4 S-attributed and L-attributed definitions</h3>
+<p>An SDD is <b>S-attributed</b> if every attribute is synthesized. Then every node depends only on its children, so a bottom-up parse (such as LR) can evaluate attributes as it reduces each production. The semantic actions can be placed at the right end of each production; this is called a <b>postfix</b> translation scheme.</p>
+<p>An SDD is <b>L-attributed</b> if every inherited attribute of a child \(X_j\) in \(A\to X_1\cdots X_n\) depends only on attributes of \(A\) and of \(X_1,\ldots,X_{j-1}\), and every synthesized attribute of \(A\) depends only on attributes of \(A\) and its children. The “L” means left-to-right: a depth-first left-to-right traversal can evaluate every attribute once. Every S-attributed SDD is L-attributed, because it has no inherited attributes at all.</p>
+<div class="table-wrap"><table>
+<tr><th>Class</th><th>Attributes allowed</th><th>Evaluation</th><th>Typical parser</th></tr>
+<tr><td>S-attributed</td><td>Synthesized only</td><td>Bottom-up, at reductions</td><td>LR</td></tr>
+<tr><td>L-attributed</td><td>Synthesized + restricted inherited</td><td>Left-to-right depth-first</td><td>LL / recursive descent</td></tr>
+<tr><td>General SDD</td><td>Any acyclic dependencies</td><td>Any topological order</td><td>Explicit dependency graph</td></tr>
+</table></div>
+
+<div class="trap"><b>Heads-up: “inherited” does not mean “from the parent only.”</b> An inherited attribute of \(X_j\) can depend on the parent \(A\) and on any left sibling \(X_1,\ldots,X_{j-1}\). It cannot depend on a right sibling, because that value would not exist yet in a left-to-right traversal. That restriction is exactly what makes L-attributed definitions evaluable in one pass.</div>
+
+<h3>6.5 Syntax-directed translation schemes: actions in the grammar</h3>
+<p>An SDD is a specification: it says what the attributes are and which rules define them. A <b>syntax-directed translation scheme</b> (SDT) is an implementation: it embeds semantic actions, written in braces, at positions in the right side of productions. The parser executes an action when it reaches that position.</p>
+<pre><code>E → E1 + T    { E.val = E1.val + T.val }
+E → T         { E.val = T.val }
+T → T1 * F    { T.val = T1.val * F.val }
+T → F         { T.val = F.val }
+F → ( E )     { F.val = E.val }
+F → digit     { F.val = digit.lexval }</code></pre>
+<p>These actions are at the right end, so they run when the production is reduced. In a bottom-up parser, that is exactly the moment when all the children’s values are available. In a top-down parser, an action in the middle of a production runs after the symbols to its left have been matched and before the symbols to its right are parsed.</p>
+
+<div class="q"><b>Infix to postfix.</b> The same expression grammar can emit postfix instead of computing a value:
+<pre><code>E → E1 + T    { print('+') }
+E → T
+T → T1 * F    { print('*') }
+T → F
+F → ( E )
+F → digit     { print(digit.lexval) }</code></pre>
+For <code>3 + 4 * 5</code>, the output is <code>3 4 5 * +</code>. The digits print when their \(F\) productions reduce; the <code>*</code> prints after the \(T_1*F\) subtree is complete; the <code>+</code> prints last. Postfix is a linearization of the tree: operands first, operator after its operands. A stack machine can evaluate it with one pass.</div>
+
+<p>If an action must run in the middle of a production, a bottom-up parser needs a marker: introduce a new nonterminal \(M\to\varepsilon\) with the action attached, and place \(M\) where the action belongs. The parser reduces \(M\) at that point, which executes the action. This is a standard trick, but it is easy to overuse; prefer an S-attributed or L-attributed formulation when possible.</p>
+
+<h3>6.6 Left recursion, attributes, and the shape of the tree</h3>
+<p>Removing left recursion changes the parse tree, so it can change where attributes must flow. For a left-associative operator, the original grammar \(E\to E+T\) naturally accumulates on the left. The transformed grammar \(E\to T E'\), \(E'\to+T E'\mid\varepsilon\) builds a right-leaning tail. If you want the same left-associative value, pass an inherited attribute down the tail:</p>
+<pre><code>E  → T R         { R.in = T.val;  E.val = R.out }
+R  → + T R1      { R1.in = R.in + T.val;  R.out = R1.out }
+R  → ε           { R.out = R.in }</code></pre>
+<p>Here <code>R.in</code> is the value accumulated so far, and <code>R.out</code> is the final value. The inherited attribute carries the accumulator down; the synthesized attribute carries the result back up. This is L-attributed and works with a top-down parser. It also shows why “just remove left recursion” is not a purely syntactic trick when semantic actions are involved.</p>
+
+<div class="key"><b>Key.</b> An SDD attaches attributes and rules to a grammar; an SDT embeds actions in productions. Synthesized attributes flow up; inherited attributes flow down or from left siblings. S-attributed definitions evaluate bottom-up; L-attributed definitions evaluate left-to-right. Dependency graphs tell you when an arbitrary definition is evaluable.</div>
+<div class="trap"><b>Heads-up: an attribute rule is not a runtime statement unless you make it one.</b> In an SDD, \(E.val=E_1.val+T.val\) is a definition of a value, not an instruction with a fixed execution time. The evaluation order comes from the dependency graph or from the S/L class. In an SDT, the braces do denote actions with an execution time. Keep the two levels separate.</div>
+<div class="trap"><b>Heads-up: inherited attributes can create cycles.</b> A rule that defines \(A.a\) from \(B.b\) and \(B.b\) from \(A.a\) is circular. No topological order exists, and a one-pass evaluator will loop or use a stale value. Check the dependency graph, not just the grammar.</div>
+<h2 id="ir">7. Intermediate code and type checking</h2>
+<p>The parse tree is still close to the source. Code generation wants something closer to a machine: explicit temporaries, explicit jumps, explicit memory operations. The middle form is <b>intermediate representation</b> (IR). A good IR is machine independent, easy to analyze, and easy to translate into many targets.</p>
+
+<h3>7.1 Why an IR at all?</h3>
+<ul class="tight">
+<li><b>Retargetability:</b> one front end can feed several back ends. The IR is the contract.</li>
+<li><b>Optimization:</b> facts such as “this expression is computed twice” are easier to see and transform in IR than in source or assembly.</li>
+<li><b>Explicitness:</b> the tree’s implicit precedence and grouping become ordered instructions with named temporaries.</li>
+<li><b>Analysis:</b> control-flow graphs and data-flow equations are defined over IR instructions and basic blocks.</li>
+</ul>
+<p>Common IR forms are abstract syntax trees (ASTs), directed acyclic graphs (DAGs) for expressions, three-address code (3AC), quadruples, triples, static single assignment (SSA), and bytecode. They differ in how much structure they keep and how easy they are to analyze. This page uses 3AC and quadruples because they are the book’s main currency and the easiest to write on an exam.</p>
+
+<h3>7.2 Three-address code</h3>
+<p><b>Three-address code</b> is a sequence of instructions of the form \(x=y\ \text{op}\ z\), plus copies, jumps, calls, and memory operations. “Three-address” means at most three names: two sources and one destination. A complex expression is broken into temporaries.</p>
+<div class="q"><b>From expression to 3AC.</b> For <code>x = a*b + c*d</code>:
+<pre><code>t1 = a * b
+t2 = c * d
+t3 = t1 + t2
+x  = t3</code></pre>
+Each instruction has one operator. The temporaries \(t_1,t_2,t_3\) are compiler-generated names. A later optimizer may eliminate \(t_3\) by writing <code>x = t1 + t2</code>, or eliminate \(t_1\) if it is used once.</div>
+
+<p>Typical 3AC instruction forms:</p>
+<div class="table-wrap"><table>
+<tr><th>Form</th><th>Meaning</th></tr>
+<tr><td><code>x = y op z</code></td><td>binary operation</td></tr>
+<tr><td><code>x = op y</code></td><td>unary operation (negation, conversion)</td></tr>
+<tr><td><code>x = y</code></td><td>copy</td></tr>
+<tr><td><code>goto L</code></td><td>unconditional jump</td></tr>
+<tr><td><code>if x relop y goto L</code></td><td>conditional jump</td></tr>
+<tr><td><code>param x</code>, <code>call p, n</code>, <code>return y</code></td><td>procedure call and return</td></tr>
+<tr><td><code>x = y[i]</code>, <code>x[i] = y</code></td><td>indexed load/store</td></tr>
+<tr><td><code>x = &amp;y</code>, <code>x = *y</code>, <code>*x = y</code></td><td>address-of, pointer load/store</td></tr>
+</table></div>
+
+<h3>7.3 Quadruples, triples, and indirect triples</h3>
+<p>A <b>quadruple</b> is a record with four fields: operator, arg1, arg2, result. It is the most explicit representation: every temporary has a name, and every instruction has an index.</p>
+<div class="q"><b>Quadruples for <code>x = a*b + c*d</code>.</b>
+<div class="table-wrap"><table>
+<tr><th>Index</th><th>op</th><th>arg1</th><th>arg2</th><th>result</th></tr>
+<tr><td>0</td><td>*</td><td>a</td><td>b</td><td>t1</td></tr>
+<tr><td>1</td><td>*</td><td>c</td><td>d</td><td>t2</td></tr>
+<tr><td>2</td><td>+</td><td>t1</td><td>t2</td><td>t3</td></tr>
+<tr><td>3</td><td>=</td><td>t3</td><td>—</td><td>x</td></tr>
+</table></div></div>
+<p>A <b>triple</b> removes the result field. The result of a triple is referred to by its index, usually written in parentheses. This saves space, but moving or reordering instructions is harder because references are positional.</p>
+<div class="q"><b>Triples for the same expression.</b> Convention: <code>(i)</code> means “the value produced by triple i”; for an assignment we write the destination first.
+<div class="table-wrap"><table>
+<tr><th>Index</th><th>op</th><th>arg1</th><th>arg2</th></tr>
+<tr><td>0</td><td>*</td><td>a</td><td>b</td></tr>
+<tr><td>1</td><td>*</td><td>c</td><td>d</td></tr>
+<tr><td>2</td><td>+</td><td>(0)</td><td>(1)</td></tr>
+<tr><td>3</td><td>=</td><td>x</td><td>(2)</td></tr>
+</table></div>
+<b>Indirect triples</b> add a separate table of pointers to triples. The instruction list is a list of indices into the triple table; reordering the pointers reorders the program without rewriting positional references. This is useful for optimization passes that move instructions.</div>
+
+<h3>7.4 Translating control flow</h3>
+<p>Control flow is where 3AC earns its keep. A conditional branch has a target label; an unconditional branch closes the current path. The exact labels are arbitrary, but the shape matters.</p>
+<div class="q"><b>If–else.</b> For
+<pre><code>if (a &lt; b) x = 1; else x = 2;</code></pre>
+one translation is:
+<pre><code>    if a &lt; b goto L1
+    goto L2
+L1: x = 1
+    goto L3
+L2: x = 2
+L3:</code></pre>
+The first branch selects the then-part; the unconditional <code>goto L2</code> skips it when the condition is false. <code>L3</code> is the join point.</div>
+
+<div class="q"><b>While.</b> For
+<pre><code>while (a &lt; b) S;</code></pre>
+one translation is:
+<pre><code>L1: if a &lt; b goto L2
+    goto L3
+L2: S
+    goto L1
+L3:</code></pre>
+The condition is tested at the top. The back edge <code>goto L1</code> is what makes it a loop. A do–while would put the test at the bottom and enter the body unconditionally.</div>
+
+<p>Boolean expressions with short-circuit evaluation need more care. In <code>a &lt; b &amp;&amp; c &lt; d</code>, if the first comparison is false, the second must not be evaluated (it may have side effects or divide by zero). One translation into a temporary truth value is:</p>
+<pre><code>    if a &lt; b goto L1
+    t = 0
+    goto L2
+L1: if c &lt; d goto L3
+    t = 0
+    goto L2
+L3: t = 1
+L2:</code></pre>
+<p>For <code>||</code>, the true branch jumps directly to <code>t = 1</code>. In a real compiler, the boolean value is often not materialized at all: the jumps are threaded directly into the surrounding <code>if</code> or <code>while</code>. That is what the true/false lists in the next subsection represent.</p>
+
+<h3>7.5 Backpatching: generate jumps before you know the target</h3>
+<p>A one-pass translator emits instructions before it knows where later code will start. For a forward jump, the target label is unknown at emission time. <b>Backpatching</b> solves this by emitting a jump with an empty target and keeping a list of the instruction indices that need that target. When the target becomes known, fill it in.</p>
+<p>Three operations are enough:</p>
+<ul class="tight">
+<li><code>makelist(i)</code> creates a list containing instruction index \(i\).</li>
+<li><code>merge(p1, p2)</code> concatenates two lists of jump indices.</li>
+<li><code>backpatch(p, target)</code> fills <code>target</code> into the target field of every jump in list \(p\).</li>
+</ul>
+<p>For a boolean expression \(E\), keep <code>E.trueList</code> (jumps to take when \(E\) is true) and <code>E.falseList</code> (jumps to take when \(E\) is false). For a statement \(S\), keep <code>S.nextList</code> (jumps that must go to the statement after \(S\)).</p>
+<div class="q"><b>The rules for <code>if</code> and <code>while</code>.</b>
+<ul class="tight">
+<li>\(S\to\textbf{if }(E)\ S_1\): backpatch \(E.trueList\) to the start of \(S_1\); \(S.nextList = \text{merge}(E.falseList, S_1.nextList)\).</li>
+<li>\(S\to\textbf{if }(E)\ S_1\ \textbf{else}\ S_2\): backpatch \(E.trueList\) to the start of \(S_1\), \(E.falseList\) to the start of \(S_2\); \(S.nextList = \text{merge}(S_1.nextList, S_2.nextList)\).</li>
+<li>\(S\to\textbf{while }(E)\ S_1\): backpatch \(S_1.nextList\) to the start of the condition, \(E.trueList\) to the start of \(S_1\); \(S.nextList = E.falseList\).</li>
+</ul>
+A marker nonterminal \(M\to\varepsilon\) can record the current instruction index as <code>M.instr</code>, which is how the start of the condition or body is remembered without a separate pass.</div>
+<div class="q"><b>Boolean operators, list-style.</b> For \(E\to E_1\ \&\&\ E_2\): backpatch \(E_1.trueList\) to the start of \(E_2\); \(E.trueList=E_2.trueList\); \(E.falseList=\text{merge}(E_1.falseList,E_2.falseList)\). For \(E\to E_1\ ||\ E_2\): backpatch \(E_1.falseList\) to the start of \(E_2\); \(E.falseList=E_2.falseList\); \(E.trueList=\text{merge}(E_1.trueList,E_2.trueList)\). For \(E\to !E_1\), swap the lists. The short-circuit semantics is encoded in which list is patched where.</div>
+
+<h3>7.6 Expression DAGs and local value numbering</h3>
+<p>A <b>DAG</b> for an expression shares identical subexpressions. For <code>a + a*(b-c) + (b-c)*d</code>, the subexpression <code>b-c</code> appears twice but is one node in the DAG; the leaf <code>a</code> is also shared. The DAG is smaller than the tree and makes common subexpressions visible.</p>
+<pre class="tree">        +
+      /   \
+     +     *
+    / \   / \
+   a   *  S   d
+      / \
+     a   S</pre>
+<p>Here \(S\) stands for the single shared node \(b-c\). It is drawn once in the DAG; the two edges into \(S\) are two uses of the same value.</p>
+<p>The same idea works for a basic block. <b>Value numbering</b> assigns a number to every distinct value. Leaves get numbers by name; each operation gets a key <code>(operator, child numbers)</code>. If the key already exists, the result is the existing number; otherwise it is a new number. Identical keys mean identical computations, so the later one can be replaced by a copy or deleted.</p>
+<div class="q"><b>Value numbering on a block.</b>
+<pre><code>a = b + c
+d = b + c
+e = a + d</code></pre>
+Number <code>b</code> as 1, <code>c</code> as 2. The first <code>b+c</code> gets number 3 and defines <code>a</code> as 3. The second <code>b+c</code> has the same key (+,1,2), so <code>d</code> also gets 3. Then <code>a+d</code> is (+,3,3), a new number 4 for <code>e</code>. The second addition is redundant; if <code>d</code> is not used later, it can be deleted. If <code>a</code> and <code>d</code> are both used, one can be replaced by the other.</div>
+<p>This is <b>local common-subexpression elimination</b>: it works within one basic block, where the straight-line order makes “the same value” easy to track. The global version needs available-expression analysis, covered in Section 10.7.</p>
+
+<div class="key"><b>Key.</b> 3AC makes operations and temporaries explicit; quadruples name results, triples use positions, indirect triples add a reorderable pointer table. Control flow becomes labels and jumps; backpatching fills forward jumps later. A DAG or value numbering removes repeated computations inside a block.</div>
+<div class="trap"><b>Heads-up: a DAG is not a control-flow graph.</b> A DAG summarizes values inside one straight-line block. A CFG summarizes which blocks can execute after which. They answer different questions and are used by different optimizations.</div>
+<div class="trap"><b>Heads-up: deleting a “redundant” assignment is safe only if it has no side effects and its result is truly unused.</b> A function call, a volatile load, or a store can change memory even if its returned value is ignored. Value numbering must not treat those as pure arithmetic.</div>
+<h3>7.7 Type expressions and type systems</h3>
+<p>A <b>type</b> is a set of values plus the operations that make sense on them. A <b>type expression</b> is a syntactic description of a type. The usual grammar is:</p>
+<div class="eq">\[
+T \to \texttt{basic} \mid \texttt{array}(T,n) \mid \texttt{pointer}(T) \mid T_1\times T_2 \mid \texttt{function}(T_1,\ldots,T_n)\to T \mid \alpha
+\]</div>
+<p>Here <code>basic</code> is a base type such as <code>int</code>, <code>float</code>, <code>char</code>, or <code>bool</code>; <code>array(T,n)</code> is an array of \(n\) elements of type \(T\); <code>pointer(T)</code> is a pointer to \(T\); \(T_1\times T_2\) is a product, used for records and parameter lists; <code>function(...)</code> is a function type; and \(\alpha\) is a type variable, used during inference.</p>
+
+<div class="table-wrap"><table>
+<tr><th>Idea</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><b>Static checking</b></td><td>Types are checked before the program runs.</td><td>A compiler rejects <code>"abc" + 1</code>.</td></tr>
+<tr><td><b>Dynamic checking</b></td><td>Types are checked while the program runs.</td><td>A scripting language raises an error at the addition.</td></tr>
+<tr><td><b>Strong typing</b></td><td>The language does not allow unchecked type confusion.</td><td>No implicit conversion of a pointer to an integer without a cast.</td></tr>
+<tr><td><b>Type safety</b></td><td>Well-typed programs do not get stuck with a type error.</td><td>A sound type system guarantees no invalid operation at run time.</td></tr>
+</table></div>
+<p>Static checking is conservative: it may reject a program that would have run correctly, because it cannot prove that a dynamic condition always holds. A <b>sound</b> type system never accepts a program that can commit a type error; a <b>complete</b> one accepts every program that cannot. For a Turing-complete language, no decidable checker can be both sound and complete for “never commits a type error”; practical systems choose soundness and accept some false alarms, or choose flexibility and use run-time checks.</p>
+
+<h3>7.8 Type equivalence: structural versus name</h3>
+<p>Two types are <b>structurally equivalent</b> if they have the same structure after resolving type names: the same base type, or the same constructor applied to equivalent components. Two types are <b>name equivalent</b> if they come from the same type declaration (or are the same primitive type).</p>
+<div class="q"><b>The difference in one example.</b>
+<pre><code>type A = int;
+type B = int;
+A x;
+B y;</code></pre>
+Under structural equivalence, <code>x</code> and <code>y</code> have the same type, because both resolve to <code>int</code>. Under strict name equivalence, <code>A</code> and <code>B</code> are distinct type names, so they are different. Many languages treat <code>typedef</code> as a transparent alias, which makes <code>A</code> and <code>B</code> compatible; Ada’s <code>type A is Integer;</code> creates a distinct type, so they are not. The rule depends on the language, not on the word “typedef.”</div>
+<p>For arrays, structural equivalence compares element type and size (and sometimes index type). For functions, it compares parameter types, parameter order, and return type. For records, it compares field names, field types, and sometimes order. Name equivalence is easier to check and gives stronger abstraction; structural equivalence is more flexible and matches “duck typing” intuitions.</p>
+
+<h3>7.9 Type inference and unification</h3>
+<p><b>Type inference</b> computes types without explicit declarations. A common engine is <b>unification</b>: represent unknown types by type variables, write equations from the way values are used, and solve the equations by substitution.</p>
+<p>The unification algorithm maintains a substitution from type variables to type expressions. To unify \(T_1\) and \(T_2\):</p>
+<ul class="tight">
+<li>If both are the same basic type or the same type constructor with equal arguments, succeed.</li>
+<li>If one is a type variable \(\alpha\), bind \(\alpha\) to the other type, provided \(\alpha\) does not occur inside that type (the <b>occurs check</b>).</li>
+<li>If both are constructors, unify their components pairwise.</li>
+<li>Otherwise, fail.</li>
+</ul>
+<div class="q"><b>Unify a function type.</b> Suppose \(f\) has type \(\alpha\to\beta\) and is applied to an <code>int</code>, producing a \(\gamma\). The application imposes \(\alpha=\texttt{int}\) and \(\beta=\gamma\). The substitution is \(\{\alpha\mapsto\texttt{int},\ \beta\mapsto\gamma\}\). If later the result is used as a <code>float</code>, unify \(\gamma=\texttt{float}\), giving \(f:\texttt{int}\to\texttt{float}\).</div>
+<div class="q"><b>Occurs check.</b> Unifying \(\alpha\) with \(\texttt{int}\to\alpha\) would require an infinite type: \(\alpha=(\texttt{int}\to(\texttt{int}\to\cdots))\). The occurs check rejects it. Without the check, the algorithm would loop or build a cyclic structure.</div>
+<p>A classic inference example is a length function:</p>
+<pre><code>length []       = 0
+length (x : xs) = 1 + length xs</code></pre>
+<p>The empty-list case says the argument is a list of some type \(\alpha\), and the result is an integer. The cons case says the argument is a list of the same type as the head, and the recursive call has the same type as the whole. Unification yields \(\texttt{length}:\texttt{list}(\alpha)\to\texttt{int}\), polymorphic in \(\alpha\). No run-time type test is needed.</p>
+
+<h3>7.10 Coercion, overloading, and polymorphism</h3>
+<ul class="tight">
+<li><b>Coercion</b> is an implicit conversion inserted by the compiler. Widening an <code>int</code> to a <code>float</code> is usually safe; narrowing a <code>float</code> to an <code>int</code> loses information and is often an explicit cast. In IR, a coercion becomes an instruction such as <code>inttofloat</code>.</li>
+<li><b>Overloading</b> lets one name have several types, such as <code>+</code> for integers and floats. The checker resolves the overload from the operand types and context. If two resolutions are equally valid, the expression is ambiguous and must be rejected or annotated.</li>
+<li><b>Parametric polymorphism</b> lets one implementation work uniformly for all types, as in <code>length : list α → int</code>. <b>Ad hoc polymorphism</b> is overloading: different implementations for different types. They look similar in source but are different mechanisms.</li>
+</ul>
+<p>Type checking an expression such as <code>a + b</code> is therefore not just “are both numeric?” It is: look up the declared types, resolve the overload, check that a common type exists, insert coercions if the language allows them, and produce the result type. If the language has subtyping, the rule is “the operands must have a common supertype that supports the operation,” which is a different and more complex check.</p>
+
+<h3>7.11 Symbol tables: the compiler’s name memory</h3>
+<p>A <b>symbol table</b> maps names to declarations. A typical entry stores the name, kind (variable, function, type, label), type, storage class and location, scope, and source position. The table is usually a hash table for fast lookup, with a stack of scopes for nested blocks.</p>
+<div class="q"><b>Nested scopes.</b>
+<pre><code>int x;
+{
+    float x;
+    x = 1.0;     // the inner float x
+}
+x = 2;           // the outer int x</code></pre>
+Entering the block pushes a scope; declaring <code>float x</code> inserts into the inner scope and shadows the outer. Lookup searches the innermost scope first, then outward. Leaving the block pops the inner scope; the outer <code>x</code> is visible again. A hash table with a scope stack can implement this by chaining entries and restoring the previous binding on exit.</div>
+<p>Symbol tables are used at every stage. The lexer may install identifiers; the parser may distinguish keywords; semantic analysis looks up types and checks declarations; code generation reads storage locations. Some compilers keep separate namespaces for variables, labels, struct tags, and member names, because the same spelling can mean different things in different contexts.</p>
+<p>Forward references need special handling. If a function calls a function declared later, the compiler either makes two passes, or inserts a placeholder and patches the type/location when the declaration is seen. The symbol table entry is the natural place to hold “declared but not yet defined.”</p>
+
+<h3>7.12 A type-checking SDD sketch</h3>
+<p>Here is the shape of the rules, not a full language. The attribute <code>type</code> is synthesized; <code>lookup</code> reads the symbol table; <code>widen</code> inserts a conversion when the language permits it.</p>
+<pre><code>E → E1 + T
+    { if numeric(E1.type) and numeric(T.type)
+         E.type = wider(E1.type, T.type);
+      else E.type = error; }
+
+E → id
+    { E.type = lookup(id.entry); }
+
+E → E1 [ E2 ]
+    { if E2.type != int then error;
+      if not array(E1.type) then error;
+      E.type = element_type(E1.type); }
+
+E → E1 ( E2, ... )
+    { if not function(E1.type) then error;
+      check arity and parameter types;
+      E.type = return_type(E1.type); }</code></pre>
+<p>For an assignment, the left side must be an lvalue (a place that can be assigned), the right side an rvalue, and the types must be compatible. For a condition, the type must be boolean (or whatever the language uses for truth). For a return, the expression type must match the enclosing function’s return type. These rules are simple individually; the engineering is in handling errors, coercions, overloads, and scopes without cascading false errors.</p>
+
+<h3>7.13 Array addressing: from subscript to byte offset</h3>
+<p>An array is stored as a contiguous block. For a one-dimensional array \(A[\ell..u]\) with element size \(w\), the address of \(A[i]\) is</p>
+<div class="eq">\[ \text{base} + (i-\ell)\times w. \]</div>
+<p>For a two-dimensional array \(A[\ell_1..u_1,\ell_2..u_2]\) stored in <b>row-major</b> order, row by row, the address of \(A[i_1,i_2]\) is</p>
+<div class="eq">\[ \text{base} + \bigl((i_1-\ell_1)\,n_2 + (i_2-\ell_2)\bigr)\times w,\qquad n_2=u_2-\ell_2+1. \]</div>
+<p>For <b>column-major</b> order, column by column, swap the roles:</p>
+<div class="eq">\[ \text{base} + \bigl((i_2-\ell_2)\,n_1 + (i_1-\ell_1)\bigr)\times w,\qquad n_1=u_1-\ell_1+1. \]</div>
+<div class="q"><b>3AC for <code>x = A[i,j]</code>, row-major, lower bounds zero.</b>
+<pre><code>t1 = i * n2
+t2 = t1 + j
+t3 = t2 * w
+t4 = base_A + t3
+x  = *t4</code></pre>
+If the lower bounds are not zero, subtract \(\ell_1\) and \(\ell_2\) before the multiply/add. If bounds checking is enabled, compare \(i\) and \(j\) with their low/high bounds and branch to an error handler before the load.</div>
+<p>Array descriptors usually store the base address, the lower and upper bounds of each dimension, the element size, and the stride for each dimension. A struct field is simpler: its address is the struct base plus a fixed offset computed from the field layout and alignment. Pointer arithmetic scales by the size of the pointed-to type: <code>p + 1</code> means “the next element,” not “the next byte.”</p>
+
+<div class="key"><b>Key.</b> Types are checked against declarations and operations; equivalence can be structural or by name; inference solves type equations by unification; coercion inserts conversions; overloading chooses among types. The symbol table supplies the declarations, and array addressing turns subscripts into byte offsets.</div>
+<div class="trap"><b>Heads-up: type equivalence and type compatibility are not the same.</b> Two types can be different but compatible through a coercion or a subtype relationship. A checker may accept <code>int + float</code> by widening, even though <code>int</code> and <code>float</code> are not equivalent. State which relation the question asks for.</div>
+<div class="trap"><b>Heads-up: row-major versus column-major changes the multiplier.</b> Row-major multiplies the first index by the number of columns; column-major multiplies the second index by the number of rows. Mixing them up is the most common array-addressing error.</div>
+<h2 id="runtime">8. Runtime environments: where values live</h2>
+<p>An intermediate representation talks about names and temporaries. At run time, those names have to become memory locations: registers, stack slots, global addresses, or heap objects. The <b>runtime environment</b> is the organization that makes this mapping work: storage areas, activation records, links between frames, and the rules for finding a nonlocal variable.</p>
+
+<h3>8.1 The four storage areas</h3>
+<p>A typical process layout has four regions:</p>
+<div class="table-wrap"><table>
+<tr><th>Area</th><th>What lives there</th><th>Lifetime</th></tr>
+<tr><td><b>Code</b></td><td>Machine instructions, read-only constants</td><td>Whole program</td></tr>
+<tr><td><b>Static data</b></td><td>Global variables, static locals, string literals</td><td>Whole program</td></tr>
+<tr><td><b>Stack</b></td><td>Activation records of active calls, local variables, parameters</td><td>One call / one block activation</td></tr>
+<tr><td><b>Heap</b></td><td>Objects allocated by <code>new</code>/<code>malloc</code>, dynamically sized data</td><td>Until freed or garbage-collected</td></tr>
+</table></div>
+<pre class="tree">High addresses
++----------------------+
+|        stack         |   grows downward
+|   frame for g        |
+|   frame for f        |
+|   frame for main     |
++----------------------+
+|        heap          |   grows upward
+|   dynamically        |
+|   allocated objects  |
++----------------------+
+|    static data       |
++----------------------+
+|        code          |
++----------------------+
+Low addresses</pre>
+<p>The exact order varies by system, and the stack and heap may be placed differently, but the picture is the standard mental model. The important part is not the addresses; it is the <b>lifetime rule</b>. A static object exists for the whole run; a stack object exists while its activation is live; a heap object exists until it is freed or becomes unreachable.</p>
+
+<div class="move"><b>Scope is not lifetime.</b> Scope is a compile-time, textual property: where a name is visible. Lifetime is a run-time property: when the storage exists. A <code>static</code> local variable has block scope but whole-program lifetime. A heap object can outlive the function that created it and be reachable through a pointer. A local variable can go out of scope while a pointer to it still exists — that is a dangling pointer, not a scoping rule.</div>
+
+<h3>8.2 Activation records: the frame of one call</h3>
+<p>Every active call has an <b>activation record</b> (also called a <b>frame</b>). It holds everything that call needs:</p>
+<ul class="tight">
+<li><b>Actual parameters</b> (or pointers to them, depending on the calling convention).</li>
+<li><b>Return address</b>: where to continue when the call returns.</li>
+<li><b>Saved machine state</b>: registers the callee must restore, sometimes condition codes.</li>
+<li><b>Control link</b> (dynamic link): a pointer to the caller’s frame.</li>
+<li><b>Access link</b> (static link): a pointer to the frame of the lexically enclosing function, when the language has nested functions.</li>
+<li><b>Local variables</b> and compiler temporaries.</li>
+</ul>
+<pre class="tree">        +----------------------+  higher addresses
+        |   actual parameters  |
+        +----------------------+
+        |    return address    |
+        +----------------------+
+        |   saved registers    |
+        +----------------------+
+        |     access link      |  -> lexical parent frame
+        +----------------------+
+        |     control link     |  -> caller frame
+        +----------------------+
+        |    local variables   |
+        +----------------------+
+        |     temporaries      |
+        +----------------------+  <- stack pointer
+        lower addresses</pre>
+<p>The order of fields is a convention, not a law. Some architectures put parameters in registers; some put the return address in a link register; some grow the stack upward. What matters is that the compiler and the calling convention agree on where each item is.</p>
+
+<h3>8.3 The calling sequence</h3>
+<p>A call is a small protocol between caller and callee:</p>
+<ol class="tight">
+<li><b>Caller:</b> evaluate the arguments, place them where the convention says (stack slots or registers), save the return address, and jump to the callee.</li>
+<li><b>Callee:</b> save the old frame pointer and any callee-saved registers, set up its own frame pointer, allocate space for locals and temporaries, and run.</li>
+<li><b>Return:</b> put the result where the convention says, restore saved registers and the old frame pointer, pop the frame, and jump back to the return address.</li>
+<li><b>Caller:</b> reclaim the argument space if it is responsible for it, and use the result.</li>
+</ol>
+<p>The <b>frame pointer</b> (FP) gives a stable reference point inside the frame, so locals can be addressed at fixed offsets even if the stack pointer moves during expression evaluation. The <b>stack pointer</b> (SP) marks the current top. A compiler may omit the frame pointer and use SP-relative offsets when the frame size is fixed; debuggers and profilers often prefer a frame pointer because it makes stack unwinding easier.</p>
+
+<div class="q"><b>Recursion.</b> A recursive call does not reuse the caller’s locals. Each call pushes a new frame with its own copy of parameters and locals. When the call returns, its frame is popped and the caller’s frame is intact. This is why a recursive function can have many “versions” of the same variable alive at once, one per activation.</div>
+
+<h3>8.4 Static, stack, and heap allocation</h3>
+<p><b>Static allocation</b> gives an object a fixed address determined at compile or load time. Globals and <code>static</code> locals live here. It is simple and fast, but it cannot support recursion or dynamically sized data, because the number of simultaneous activations is not known in advance.</p>
+<p><b>Stack allocation</b> gives each activation a frame pushed on call and popped on return. It matches the LIFO (last-in, first-out) shape of calls and supports recursion naturally. The limitation is lifetime: a stack object dies when its frame is popped. Returning a pointer to a local, or storing it somewhere that outlives the call, leaves a dangling reference.</p>
+<p><b>Heap allocation</b> gives an object a lifetime independent of the call stack. The program requests space at run time; the object remains until explicitly freed or garbage-collected. Heap allocation supports dynamic data structures (linked lists, trees, closures), but it costs allocation time and requires memory management.</p>
+<div class="trap"><b>Heads-up: “the compiler puts locals on the stack” is not universal.</b> Locals that are captured by a closure, or whose address escapes, may be allocated on the heap. An optimizing compiler may keep a local in a register for its whole live range, or scalar-replace an object. The source-level lifetime rule is what matters; the storage decision is an implementation strategy.</div>
+
+<h3>8.5 Lexical scope versus dynamic scope</h3>
+<p><b>Lexical scope</b> (static scope) resolves a name by its position in the source text: the innermost enclosing declaration wins. <b>Dynamic scope</b> resolves a name by the current call chain: the most recent active declaration wins. Most modern languages use lexical scope because it makes programs easier to reason about and allows compile-time resolution.</p>
+<div class="q"><b>The same program, two answers.</b>
+<pre><code>int x = 1;
+void f() { print(x); }
+void g() { int x = 2; f(); }
+g();</code></pre>
+Under lexical scope, <code>f</code> was declared next to the global <code>x</code>, so it prints <b>1</b>. Under dynamic scope, <code>f</code> is called from <code>g</code>, whose local <code>x</code> is active, so it prints <b>2</b>. The source text is identical; the name-resolution rule is different.</div>
+<p>Lexical scope is implemented with the <b>access link</b>: a pointer from the current frame to the frame of its lexical parent. Dynamic scope is implemented by searching the <b>control links</b> (the caller chain) at run time. This is the cleanest way to remember which link does what:</p>
+<div class="eq">\[ \text{access link} \to \text{lexical parent}, \qquad \text{control link} \to \text{caller}. \]</div>
+
+<h3>8.6 Access to nonlocal variables</h3>
+<p>In a language with nested functions, an inner function can refer to a variable of an outer function. The compiler knows the <b>lexical depth</b> of each declaration: global scope is depth 0, a function body is depth 1, a nested function is depth 2, and so on. To reach a variable at depth \(k\) from a frame at depth \(d\), follow \(d-k\) access links.</p>
+<div class="q"><b>An access-link chain.</b>
+<pre><code>void outer() {
+    int x = 10;
+    void middle() {
+        void inner() { print(x); }
+        inner();
+    }
+    middle();
+}</code></pre>
+<code>outer</code> is at depth 1, <code>middle</code> at depth 2, <code>inner</code> at depth 3. When <code>inner</code> runs, its access link points to <code>middle</code>’s frame; <code>middle</code>’s access link points to <code>outer</code>’s frame. To find <code>x</code>, <code>inner</code> follows two access links. The control link would lead to whoever called <code>inner</code>, which may not be its lexical parent.</div>
+<p>The access-link chain costs \(O(d)\) per nonlocal access in the worst case. A <b>display</b> is an array indexed by lexical depth that stores the current frame pointer for each depth. Then a nonlocal access is one array lookup. The display is updated on call and restored on return; it trades a small amount of bookkeeping for faster access.</p>
+<p>If an inner function escapes its defining scope — for example, it is returned as a closure and called later — the stack frame it refers to may be gone. A language with closures must keep the captured environment alive, typically by allocating it on the heap and storing a pointer in the closure. This is the same lifetime problem as returning a pointer to a local, seen at the level of functions.</p>
+
+<div class="key"><b>Key.</b> Code and static data last for the program; stack frames last for one activation; heap objects last until freed or unreachable. The activation record holds parameters, return address, saved state, links, locals, and temporaries. Lexical scope uses access links; dynamic scope follows control links.</div>
+<div class="trap"><b>Heads-up: the control link and the access link are not interchangeable.</b> The control link points to the caller. The access link points to the lexically enclosing function. In a language without nested functions, they may coincide in simple cases, but confusing them breaks nonlocal access and closures.</div>
+<h3>8.7 Parameter passing: five different contracts</h3>
+<p>“Pass by value” and “pass by reference” are not the only options, and the differences are semantic, not just implementation details. The parameter mode decides what the callee receives, when the argument is evaluated, and whether writes are visible to the caller.</p>
+<div class="table-wrap"><table>
+<tr><th>Mode</th><th>What the callee gets</th><th>Writes visible to caller?</th><th>Argument evaluated</th></tr>
+<tr><td><b>Call-by-value</b></td><td>A copy of the argument’s value</td><td>No (for the copy)</td><td>Once, before the call</td></tr>
+<tr><td><b>Call-by-reference</b></td><td>The address of the argument (an lvalue)</td><td>Yes, immediately</td><td>Once; the location is passed</td></tr>
+<tr><td><b>Call-by-value-result</b></td><td>A copy in; the copy is written back at return</td><td>Yes, at return</td><td>Once in, once out</td></tr>
+<tr><td><b>Call-by-name</b></td><td>An unevaluated expression (a thunk)</td><td>Depends on the expression; writes happen through it</td><td>Every time the parameter is used</td></tr>
+<tr><td><b>Call-by-need</b></td><td>A memoized thunk</td><td>Depends; evaluated at most once</td><td>First use, then cached</td></tr>
+</table></div>
+
+<div class="q"><b>Value versus reference.</b>
+<pre><code>void f(int x)  { x = 99; }
+void g(int &amp;x) { x = 99; }
+
+int a = 1;
+f(a);   // a is still 1
+g(a);   // a is now 99</code></pre>
+In <code>f</code>, the parameter is a local copy; assigning 99 changes the copy, not <code>a</code>. In <code>g</code>, the parameter is an alias for <code>a</code>; assigning through it changes <code>a</code>.</div>
+
+<p><b>Call-by-value-result</b> (copy-in/copy-out) was designed to give the callee a local copy, like call-by-value, but to copy the final value back on return, like reference. It is not equivalent to reference when the same object is passed twice or when the argument is also reachable another way. The copy-out order matters.</p>
+<div class="q"><b>The classic call-by-name surprise.</b> Suppose a swap procedure has call-by-name parameters, and the caller writes
+<pre><code>int i = 0;
+int a[2] = {10, 20};
+swap(i, a[i]);</code></pre>
+Inside the procedure, <code>x</code> stands for the expression <code>i</code> and <code>y</code> stands for the expression <code>a[i]</code>. The body <code>t = x; x = y; y = t</code> becomes: <code>t = 0</code>; then <code>i = a[i]</code>, which sets <code>i = 10</code>; then <code>a[i] = 0</code>, which now writes <code>a[10]</code>, not <code>a[0]</code>. The second use of <code>y</code> re-evaluated its expression after <code>i</code> changed. With call-by-reference, <code>y</code> would be bound to the address of <code>a[0]</code> at call time, so this particular surprise does not occur — but references still create aliases, as in <code>f(a, a)</code> with two reference parameters. With value-result, copy-out order can matter when the arguments alias.</div>
+
+<p><b>Call-by-name</b> substitutes the argument expression textually for each use of the parameter. If the expression has side effects, those effects happen on every use. It can implement short-circuit-like behavior and lazy evaluation, but it is hard to reason about and hard to optimize. <b>Call-by-need</b> evaluates the thunk on first use and caches the result; it gives laziness without repeated work. Haskell uses call-by-need.</p>
+
+<div class="trap"><b>Heads-up: “Java passes objects by reference” is imprecise.</b> Java passes the object reference by value: the callee gets a copy of the reference. It can mutate the object both refer to, but it cannot make the caller’s variable point to a different object. C passes arrays as pointers to their first element, so array parameters behave like references even though scalar parameters are by value. State the language and the mode, not just the word “reference.”</div>
+<div class="trap"><b>Heads-up: argument evaluation order can matter.</b> In C, the order of evaluation of function arguments is unspecified. If two arguments modify the same object, the program may have undefined behavior. A compiler optimization must respect the language’s sequencing rules, not assume left-to-right.</div>
+
+<h3>8.8 Heap management: allocation, fragmentation, and collection</h3>
+<p>The heap is a pool of memory managed at run time. An allocator must find a free block of the requested size, return it, and later accept it back. The classic strategies are:</p>
+<ul class="tight">
+<li><b>First-fit:</b> take the first free block large enough. Fast, but can leave small fragments near the front.</li>
+<li><b>Best-fit:</b> take the smallest free block large enough. Less wasted space per allocation, but slower to search and can leave many tiny unusable fragments.</li>
+<li><b>Worst-fit:</b> take the largest free block. Leaves a large remainder, but tends to break up large free areas.</li>
+</ul>
+<p><b>Internal fragmentation</b> is wasted space inside an allocated block (for example, rounding a request up to an alignment boundary). <b>External fragmentation</b> is free space split into many small blocks that cannot satisfy a large request even though the total free space is enough. <b>Coalescing</b> merges adjacent free blocks on free; boundary tags or segregated free lists make this practical.</p>
+
+<h3>8.9 Garbage collection: reclaim what can never be used again</h3>
+<p>An object is <b>garbage</b> if it is unreachable from the program’s <b>roots</b>: registers, stack slots, global variables, and any other live starting points. Reachability is an approximation of “will never be used again”; a conservative collector may retain an object that is actually dead, which is safe but wastes memory. A precise collector knows exactly which words are pointers.</p>
+<div class="table-wrap"><table>
+<tr><th>Technique</th><th>How it works</th><th>Strength</th><th>Cost / weakness</th></tr>
+<tr><td><b>Reference counting</b></td><td>Each object counts references; free when the count hits zero.</td><td>Immediate reclamation; no long pause.</td><td>Per-assignment overhead; cycles never reach zero; count overflow.</td></tr>
+<tr><td><b>Mark-and-sweep</b></td><td>Mark all reachable objects from roots; sweep unmarked objects onto the free list.</td><td>Handles cycles; no object movement.</td><td>Stop-the-world pause; fragmentation; mark stack space.</td></tr>
+<tr><td><b>Copying (Cheney)</b></td><td>Copy live objects from “from-space” to “to-space”; update pointers; flip spaces.</td><td>Compacts; allocation is a pointer bump; no fragmentation.</td><td>Half the heap is reserved; moving requires updating all references.</td></tr>
+<tr><td><b>Generational</b></td><td>Collect young objects often, old objects rarely; promote survivors.</td><td>Exploits the fact that most objects die young.</td><td>Write barriers; promotion policy; complexity.</td></tr>
+</table></div>
+<p>Mark-and-sweep and copying are <b>tracing</b> collectors: they start from roots and follow pointers. Reference counting is not tracing; it maintains counts incrementally. Many real systems combine techniques: a generational copying young generation, a mark-sweep old generation, and a cycle collector for reference-counted objects.</p>
+<p>Garbage collection interacts with the compiler. The compiler must emit <b>root maps</b> or stack maps so the collector can find pointers in frames and registers. It must not keep a live object only in a register that the collector cannot see, and it must update pointers if the collector moves objects. A moving collector requires <b>handles</b> or precise pointer updates; a non-moving collector avoids that but suffers fragmentation.</p>
+
+<div class="key"><b>Key.</b> Parameter modes decide aliasing and evaluation time. The heap trades simple lifetime rules for flexible lifetime; fragmentation is the price. Garbage collectors reclaim unreachable objects by counting, marking, or copying; each choice trades pause time, space, and pointer-update complexity.</div>
+<div class="trap"><b>Heads-up: a memory leak is not always a missing <code>free</code>.</b> In a garbage-collected language, an object can be reachable from a root but no longer needed — a cache that grows forever, a listener that is never removed, a global list that keeps everything alive. That is a semantic leak; the collector is doing its job.</div>
+<div class="trap"><b>Heads-up: returning a pointer to a local is a lifetime error, not a type error.</b> The type system may say <code>int*</code>, but the storage is gone when the frame is popped. The same issue appears when a closure captures a stack frame that has returned; the environment must be heap-allocated or otherwise kept alive.</div>
+<h2 id="local">9. Basic blocks, CFGs, and local optimization</h2>
+<p>Optimization needs a unit of analysis. The first unit is the <b>basic block</b>: a straight-line sequence of instructions with one entry and one exit. Inside a block, control never branches except at the end, so the order of instructions is fixed. That makes local reasoning easy: if two instructions compute the same expression and nothing between them changes the operands, the second computation is redundant.</p>
+
+<h3>9.1 Leaders and basic blocks</h3>
+<p>To split a program into basic blocks, find the <b>leaders</b>:</p>
+<ol class="tight">
+<li>The first instruction is a leader.</li>
+<li>Every instruction that is the target of a jump is a leader.</li>
+<li>Every instruction immediately after a jump (conditional or unconditional) is a leader.</li>
+</ol>
+<p>A basic block starts at a leader and ends just before the next leader. Its last instruction is a branch, a return, or an ordinary instruction that falls through to the next block. If control can fall through from one block to the next, there is an edge between them.</p>
+
+<div class="q"><b>A loop, split into blocks.</b>
+<pre><code>    i = 1
+    sum = 0
+L1: if i &gt; 10 goto L2
+    sum = sum + i
+    i = i + 1
+    goto L1
+L2: ...</code></pre>
+Leaders: the first instruction; <code>L1</code> (jump target); <code>sum = sum + i</code> (instruction after the conditional jump); <code>L2</code> (jump target). The blocks are:
+<ul class="tight">
+<li><b>B1:</b> <code>i = 1; sum = 0</code></li>
+<li><b>B2:</b> <code>L1: if i &gt; 10 goto L2</code></li>
+<li><b>B3:</b> <code>sum = sum + i; i = i + 1; goto L1</code></li>
+<li><b>B4:</b> <code>L2: ...</code></li>
+</ul>
+The CFG edges are B1→B2; B2→B4 when the condition is true; B2→B3 when it is false; B3→B2 (the back edge); B4→exit.</div>
+
+<pre class="tree">        B1
+        |
+        v
+        B2  --true-->  B4
+        |               |
+     false              v
+        v             exit
+        B3
+        |
+        +---- back to B2</pre>
+
+<p>The <b>control-flow graph</b> (CFG) has basic blocks as nodes and possible control transfers as edges. It is the data structure behind almost every global analysis. A CFG may have a unique entry and a unique exit; if the source has multiple returns, a synthetic exit node can collect them. Unreachable blocks are blocks with no path from entry; they can be removed, but only after checking that they contain no required side effects or error behavior.</p>
+
+<h3>9.2 What “local” buys you</h3>
+<p>A local optimization looks at one basic block and nothing else. It does not need to know which branches led to the block or which blocks follow. This makes it fast and safe, but limited: it cannot see that an expression is computed in two different predecessors, or that a variable is dead on every path to the exit. Those are global questions, answered by data-flow analysis in Section 10.</p>
+
+<h3>9.3 Constant folding and constant propagation</h3>
+<p><b>Constant folding</b> evaluates an operation whose operands are compile-time constants. <b>Constant propagation</b> replaces a use of a variable with a known constant. Locally, both can be done in one forward pass over the block.</p>
+<div class="q"><b>A block that collapses.</b>
+<pre><code>x = 2 * 3
+y = x + 0
+z = y * 1
+w = z * 8</code></pre>
+Fold <code>2*3</code> to 6, so <code>x=6</code>. Propagate 6: <code>y=6+0</code>, fold to 6. Propagate: <code>z=6*1=6</code>. Propagate: <code>w=6*8=48</code>. If none of <code>x,y,z</code> is used later, the block reduces to <code>w=48</code> (and possibly nothing, if <code>w</code> is also dead). The algebra is simple; the hard part is knowing when a variable really holds the constant on every path.</div>
+<p><b>Algebraic identities</b> simplify expressions using laws such as \(x+0=x\), \(x-0=x\), \(x\cdot1=x\), \(x/1=x\), \(x-x=0\), and \(x\cdot0=0\). These are not universally safe. Floating-point \(x+0\) is not the identity for \(x=-0.0\) under IEEE rules, \(x\cdot0\) is not zero for NaN or infinity, and signed integer overflow is undefined in C/C++. A compiler applies an identity only when the language semantics guarantee it, or when it can prove the exceptional cases cannot occur.</p>
+
+<h3>9.4 Strength reduction</h3>
+<p><b>Strength reduction</b> replaces an expensive operation with a cheaper equivalent. Multiplication by a power of two can become a shift: \(x*8\) becomes \(x\ll 3\). Multiplication by a small constant can become additions: \(x*3\) becomes \(x+x+x\) (not always faster; the target matters). Division by a power of two can become a shift for unsigned or known-nonnegative values; for signed values, rounding toward zero and negative numbers make the simple shift wrong.</p>
+<div class="q"><b>Address arithmetic is the classic case.</b> In a loop over an array, <code>A[i]</code> is <code>base + i*w</code>. Instead of multiplying by <code>w</code> every iteration, keep a pointer <code>p</code> that starts at <code>base</code> and add <code>w</code> each iteration. The multiplication disappears from the loop; the pointer increment is the strength-reduced form. This is also called <b>induction-variable strength reduction</b>.</div>
+
+<h3>9.5 Copy propagation and dead code</h3>
+<p><b>Copy propagation</b> replaces uses of a variable that was assigned from another variable. If <code>x = y</code> and <code>x</code> is not redefined before <code>z = x + 1</code>, the second instruction can become <code>z = y + 1</code>. If <code>x</code> then has no uses, the copy is dead and can be removed. The safety condition is that <code>y</code> has not been redefined between the copy and the use, and that <code>x</code> has not been redefined.</p>
+<p><b>Dead code elimination</b> removes an instruction whose result is never used and whose execution has no observable side effect. A store to a local variable that is never read again is dead. A store through a pointer may not be dead, because it may alias a location someone else reads; a function call may have side effects; a division by zero may raise an exception. Liveness analysis (Section 10.5) is the systematic way to know which variables are live at each point.</p>
+
+<h3>9.6 Common-subexpression elimination with a DAG</h3>
+<p>Inside a block, if the same expression is computed twice with the same operand values and nothing changes in between, the second computation can reuse the first result. A <b>DAG</b> makes this visible: identical subexpressions become one node with multiple parents. <b>Value numbering</b> is the algorithmic version.</p>
+<div class="q"><b>Local CSE.</b>
+<pre><code>a = b + c
+d = b + c
+e = a + d</code></pre>
+The two <code>b+c</code> computations are identical. Value numbering gives both the same number; one can be replaced by a copy, or the second can be deleted if its destination is not needed. If <code>a</code> and <code>d</code> are both live, the block can become:
+<pre><code>a = b + c
+d = a
+e = a + d</code></pre>
+and then copy propagation can simplify <code>e = a + a</code>. If <code>d</code> is not used, the copy disappears too.</div>
+<p>For a whole basic block, the DAG construction is:</p>
+<ol class="tight">
+<li>Create leaves for variables and constants.</li>
+<li>For each instruction, create or find an operator node whose children are the value nodes of its operands. If an identical node exists, reuse it; otherwise create it.</li>
+<li>Attach the destination variable to the result node. A later assignment to the same variable creates a new node and detaches the old value.</li>
+<li>After the block, emit the nodes in a topological order, skipping nodes with no live output. This reconstructs optimized code.</li>
+</ol>
+<p>The DAG is a local value graph, not a control-flow graph. It assumes the block executes straight through. If an operand is redefined, the later computation is a different node even if the operator is the same.</p>
+
+<h3>9.7 Peephole optimization</h3>
+<p><b>Peephole optimization</b> looks at a small sliding window of target instructions and replaces a pattern with a cheaper one. It is local, machine-specific, and often iterative: a rewrite can expose another rewrite. Typical patterns:</p>
+<ul class="tight">
+<li>Remove a jump to the immediately following label: <code>goto L; L:</code> becomes nothing.</li>
+<li>Remove redundant load/store pairs when the value is already in a register.</li>
+<li>Replace <code>push R; pop R</code> with nothing.</li>
+<li>Replace multiplication by a small constant with a shift or an add, when the target allows it.</li>
+<li>Simplify <code>x = x + 0</code> or <code>x = x * 1</code> only when the target arithmetic guarantees the identity; IEEE signed zero and NaNs can break it.</li>
+<li>Thread jumps: if <code>goto L1</code> and <code>L1: goto L2</code>, jump directly to <code>L2</code> (provided no observable label semantics intervene).</li>
+</ul>
+<p>Peephole optimization is not a substitute for global analysis. It can miss a redundancy spread across two blocks, and it can be fooled by aliasing or by instructions with side effects. Its advantage is that it is cheap and captures the small inefficiencies that code generators naturally produce.</p>
+
+<div class="key"><b>Key.</b> Leaders define basic blocks; blocks and edges form the CFG. Local optimization works inside one block: fold constants, propagate copies, simplify identities, reduce strength, eliminate dead code, and reuse common subexpressions via a DAG. Peephole optimization is a small-window, target-specific cleanup.</div>
+<div class="trap"><b>Heads-up: “local” CSE cannot see across a branch.</b> If <code>b+c</code> is computed in both the then-block and the else-block, a local DAG will not remove one; they are different blocks. Global CSE needs available-expression analysis and a way to name the shared value across paths.</div>
+<div class="trap"><b>Heads-up: algebraic identities are not always identities.</b> Floating-point signed zeros, NaN, infinities, and signed integer overflow break the algebra taught in school. A transformation that is valid for mathematical integers may be invalid for machine integers or IEEE floats. Check the language’s semantics before applying it.</div>
+<h2 id="dataflow">10. Data-flow analysis: facts that flow through the graph</h2>
+<p>A local optimization sees one basic block. A global optimization needs to know facts at every point in the CFG: which definitions can reach this use, which variables are still needed, which expressions have already been computed on every path, which variables hold constants. <b>Data-flow analysis</b> is the general method for computing those facts. It sets up equations over the CFG and solves them by iteration to a fixed point.</p>
+
+<h3>10.1 The four questions every analysis answers</h3>
+<div class="table-wrap"><table>
+<tr><th>Question</th><th>What it decides</th></tr>
+<tr><td><b>Direction</b></td><td>Does information flow forward (from entry to exit) or backward (from exit to entry)?</td></tr>
+<tr><td><b>May or must</b></td><td>Is a fact possible on some path (union), or guaranteed on every path (intersection)?</td></tr>
+<tr><td><b>Transfer function</b></td><td>How does one basic block change the incoming facts? Usually <code>gen</code> adds facts and <code>kill</code> removes facts.</td></tr>
+<tr><td><b>Initial values</b></td><td>What do we assume at the entry or exit before iteration? This determines which fixed point we compute.</td></tr>
+</table></div>
+<p>Once you can answer those four, the equations almost write themselves. The rest is bookkeeping: iterate until nothing changes, and make sure the iteration terminates.</p>
+
+<h3>10.2 The lattice picture</h3>
+<p>A data-flow analysis has a set of possible facts called a <b>domain</b>, and a way to combine facts from different paths. The domain is usually a finite lattice: a partially ordered set in which every pair of elements has a greatest lower bound (meet) and a least upper bound (join). The height of the lattice is the length of the longest chain; finite height is what guarantees termination.</p>
+<p>For a powerset domain, the order is set inclusion. The bottom is \(\varnothing\), the top is the universal set \(U\). Union and intersection combine facts:</p>
+<div class="eq">\[ \text{may analysis: combine by union }(\cup), \qquad \text{must analysis: combine by intersection }(\cap). \]</div>
+<p>The Dragon Book calls the combining operator the <b>meet operator</b>, even when it is union. Do not let the name mislead you: what matters is whether the analysis asks “on some path” or “on every path.”</p>
+<p>For constant propagation, the domain is different: each variable can be \(\top\) (no information yet), a specific constant \(c\), or \(\bot\) (not a constant, because paths disagree). The meet table is:</p>
+<div class="table-wrap"><table>
+<tr><th>\(\sqcap\)</th><th>\(\top\)</th><th>\(c\)</th><th>\(d\)</th><th>\(\bot\)</th></tr>
+<tr><td>\(\top\)</td><td>\(\top\)</td><td>\(c\)</td><td>\(d\)</td><td>\(\bot\)</td></tr>
+<tr><td>\(c\)</td><td>\(c\)</td><td>\(c\)</td><td>\(\bot\)</td><td>\(\bot\)</td></tr>
+<tr><td>\(d\)</td><td>\(d\)</td><td>\(\bot\)</td><td>\(d\)</td><td>\(\bot\)</td></tr>
+<tr><td>\(\bot\)</td><td>\(\bot\)</td><td>\(\bot\)</td><td>\(\bot\)</td><td>\(\bot\)</td></tr>
+</table></div>
+<p>Here \(c\neq d\). Start at \(\top\) and move downward as information arrives: a single constant is more informative than “unknown,” and a conflict is the most conservative result. This is a different lattice from the powerset one, but the fixed-point idea is the same.</p>
+
+<div class="move"><b>Why iteration terminates.</b> Each step of the analysis moves a value along the lattice in one direction: upward for a may analysis that starts at bottom, downward for a must analysis that starts at top. The lattice has finite height, and the transfer functions are monotone (more input facts cannot produce fewer output facts in the direction of travel). A monotone sequence in a finite-height lattice cannot change forever, so the iteration reaches a fixed point.</div>
+
+<h3>10.3 The worklist algorithm</h3>
+<p>For a forward analysis, the equations are:</p>
+<div class="eq">\[ \mathrm{IN}[B]=\bigsqcup_{P\in\mathrm{pred}(B)}\mathrm{OUT}[P],\qquad \mathrm{OUT}[B]=f_B(\mathrm{IN}[B]). \]</div>
+<p>For a backward analysis, reverse the arrows:</p>
+<div class="eq">\[ \mathrm{OUT}[B]=\bigsqcup_{S\in\mathrm{succ}(B)}\mathrm{IN}[S],\qquad \mathrm{IN}[B]=f_B(\mathrm{OUT}[B]). \]</div>
+<p>The symbol \(\sqcup\) is the combination operator: union for may, intersection for must. A worklist implementation avoids recomputing the whole graph after every change:</p>
+<pre><code>initialize IN/OUT for every block
+worklist = all blocks
+while worklist is not empty:
+    remove a block B
+    recompute IN[B] from predecessors (forward)
+    recompute OUT[B] from IN[B] and the transfer function
+    if OUT[B] changed:
+        add every successor of B to the worklist</code></pre>
+<p>For a backward analysis, recompute OUT from successors, then IN, and add predecessors when IN changes. The order of removal affects speed, not the final fixed point. A reverse-postorder traversal usually converges faster because it follows the flow of information.</p>
+
+<h3>10.4 Reaching definitions</h3>
+<p>A <b>definition</b> is an instruction that assigns to a variable. A definition \(d\) <b>reaches</b> a point \(p\) if there is a path from \(d\) to \(p\) on which the variable is not redefined. Reaching definitions is a <b>forward may</b> analysis: a definition reaches if it can reach on some path, so the combination is union.</p>
+<p>For each block \(B\):</p>
+<ul class="tight">
+<li>\(\mathrm{gen}[B]\): definitions inside \(B\) that reach the end of \(B\). If a variable is defined several times in \(B\), only the last definition reaches the end; earlier ones are killed inside the block.</li>
+<li>\(\mathrm{kill}[B]\): all definitions of variables that are defined in \(B\), except the ones in \(\mathrm{gen}[B]\). These are the definitions from other blocks that cannot survive past \(B\).</li>
+</ul>
+<p>The equations are:</p>
+<div class="eq">\[ \mathrm{IN}[B]=\bigcup_{P\in\mathrm{pred}(B)}\mathrm{OUT}[P],\qquad \mathrm{OUT}[B]=\mathrm{gen}[B]\cup(\mathrm{IN}[B]-\mathrm{kill}[B]). \]</div>
+<p>Initialize \(\mathrm{OUT}[B]=\varnothing\) for every block; the entry block has no predecessors, so \(\mathrm{IN}[\text{entry}]=\varnothing\). The iteration moves sets upward by union.</p>
+
+<div class="q"><b>A branch example.</b>
+<pre><code>B1: d1: x = 1
+    d2: y = 2
+B2: if x &gt; 0 goto B4
+B3: d3: y = 3
+    goto B5
+B4: d4: y = 4
+B5: d5: z = y</code></pre>
+The definitions are \(d_1\) (x), \(d_2,d_3,d_4\) (y), and \(d_5\) (z).
+<div class="table-wrap"><table>
+<tr><th>Block</th><th>gen</th><th>kill</th><th>IN</th><th>OUT</th></tr>
+<tr><td>B1</td><td>{d1,d2}</td><td>{d3,d4}</td><td>∅</td><td>{d1,d2}</td></tr>
+<tr><td>B2</td><td>∅</td><td>∅</td><td>{d1,d2}</td><td>{d1,d2}</td></tr>
+<tr><td>B3</td><td>{d3}</td><td>{d2,d4}</td><td>{d1,d2}</td><td>{d1,d3}</td></tr>
+<tr><td>B4</td><td>{d4}</td><td>{d2,d3}</td><td>{d1,d2}</td><td>{d1,d4}</td></tr>
+<tr><td>B5</td><td>{d5}</td><td>∅</td><td>{d1,d3,d4}</td><td>{d1,d3,d4,d5}</td></tr>
+</table></div>
+At the entry of B5, the definitions of \(y\) that reach are \(d_3\) and \(d_4\); \(d_2\) was killed on both branches. \(d_1\) still reaches because neither branch redefines \(x\). \(d_5\) is generated inside B5, so it is in OUT but not IN.</div>
+
+<div class="trap"><b>Heads-up: a definition can be killed on one path and still reach on another.</b> Reaching definitions is a may analysis: the union of predecessor OUT sets keeps a definition alive if any path preserves it. Do not intersect the predecessor sets; that would be a must analysis and would lose valid reaching facts.</div>
+<div class="trap"><b>Heads-up: gen is not “every definition in the block.”</b> If a block contains <code>x=1; x=2</code>, only the second definition reaches the end; the first is killed inside the block. Computing gen as “all definitions” would make the analysis claim a dead definition reaches later code.</div>
+<h3>10.5 Live variables</h3>
+<p>A variable \(x\) is <b>live</b> at a program point if there is a path from that point to the exit on which \(x\) is used before it is defined. Liveness is a <b>backward may</b> analysis: it looks toward the future, and a variable is live if <em>some</em> path uses it. It is the basis for dead-code elimination and register allocation.</p>
+<p>For each block \(B\):</p>
+<ul class="tight">
+<li>\(\mathrm{use}[B]\): variables used in \(B\) before any definition in \(B\).</li>
+<li>\(\mathrm{def}[B]\): variables defined in \(B\) before any use in \(B\).</li>
+</ul>
+<p>The equations run backward:</p>
+<div class="eq">\[ \mathrm{OUT}[B]=\bigcup_{S\in\mathrm{succ}(B)}\mathrm{IN}[S],\qquad \mathrm{IN}[B]=\mathrm{use}[B]\cup(\mathrm{OUT}[B]-\mathrm{def}[B]). \]</div>
+<p>Initialize \(\mathrm{IN}[B]=\varnothing\) for all blocks and \(\mathrm{OUT}[\text{exit}]=\varnothing\). The union over successors is the “some path” part; subtracting \(\mathrm{def}[B]\) stops a variable from being live before a definition that kills it.</p>
+
+<div class="q"><b>Liveness on the branch example.</b> The same CFG:
+<pre><code>B1: d1: x = 1
+    d2: y = 2
+B2: if x &gt; 0 goto B4
+B3: d3: y = 3
+    goto B5
+B4: d4: y = 4
+B5: d5: z = y</code></pre>
+<div class="table-wrap"><table>
+<tr><th>Block</th><th>use</th><th>def</th><th>IN</th><th>OUT</th></tr>
+<tr><td>B1</td><td>∅</td><td>{x,y}</td><td>∅</td><td>{x}</td></tr>
+<tr><td>B2</td><td>{x}</td><td>∅</td><td>{x}</td><td>∅</td></tr>
+<tr><td>B3</td><td>∅</td><td>{y}</td><td>∅</td><td>{y}</td></tr>
+<tr><td>B4</td><td>∅</td><td>{y}</td><td>∅</td><td>{y}</td></tr>
+<tr><td>B5</td><td>{y}</td><td>{z}</td><td>{y}</td><td>∅</td></tr>
+</table></div>
+Read it backward. At the exit of B5, nothing is live. B5 uses \(y\), so \(y\) is live at B5’s entry; \(z\) is defined but never used, so \(z\) is dead. B3 and B4 both define \(y\), so \(y\) is not live at their entries; the use in B5 is already satisfied by those definitions. B2 uses \(x\), so \(x\) is live at B2’s entry and at B1’s exit. B1 defines \(x\), so \(x\) is not live at B1’s entry. The assignment \(y=2\) in B1 is dead because both branches redefine \(y\) before B5 uses it.</div>
+
+<p>Liveness gives <b>interference</b>: two variables interfere if both are live at the same program point. In a register allocator, interfering variables cannot share a register; the interference graph is colored with the number of available registers. It also gives a precise dead-code test: an assignment to \(x\) is dead if \(x\) is not live immediately after the assignment (and the assignment has no other side effect).</p>
+
+<div class="trap"><b>Heads-up: liveness is about the future, not the past.</b> A variable that was used earlier is not necessarily live now. A variable that is defined but never used again is dead even if it was live before the definition. Always ask: “from here to the exit, is there a use before the next definition?”</div>
+<div class="trap"><b>Heads-up: use and def are “before any” sets.</b> If a block reads \(x\) and then writes \(x\), \(x\) is in use, not in def, because the read happens first. If it writes \(x\) and then reads \(x\), \(x\) is in def, and the later read does not make the incoming value live. Getting this order wrong flips the liveness result.</div>
+
+<h3>10.6 Available expressions</h3>
+<p>An expression \(e\) is <b>available</b> at a point if every path from entry to that point evaluates \(e\), and no operand of \(e\) is redefined after the evaluation. This is a <b>forward must</b> analysis: “every path” means intersection. It is the basis for global common-subexpression elimination.</p>
+<p>For each block \(B\):</p>
+<ul class="tight">
+<li>\(\mathrm{gen}[B]\): expressions that are definitely computed in \(B\) and still available at the end of \(B\).</li>
+<li>\(\mathrm{kill}[B]\): expressions with an operand defined in \(B\). If an expression is killed and then recomputed, it is in both sets; the equation re-adds it through gen.</li>
+</ul>
+<p>The equations are:</p>
+<div class="eq">\[ \mathrm{IN}[B]=\bigcap_{P\in\mathrm{pred}(B)}\mathrm{OUT}[P],\qquad \mathrm{OUT}[B]=\mathrm{gen}[B]\cup(\mathrm{IN}[B]-\mathrm{kill}[B]). \]</div>
+<p>For the entry block, \(\mathrm{IN}[\text{entry}]=\varnothing\) and \(\mathrm{OUT}[\text{entry}]=\mathrm{gen}[\text{entry}]\). For every other block, initialize \(\mathrm{OUT}[B]\) to the universal set \(U\) of all expressions, then iterate downward by intersection. Starting at the top and moving down computes the greatest fixed point, which is the most precise safe set of guaranteed-available expressions.</p>
+
+<div class="q"><b>Available expressions with a killing branch.</b>
+<pre><code>B1: t1 = a + b
+B2: if c goto B3 else B4
+B3: t2 = a + b
+    goto B5
+B4: a = 1
+    goto B5
+B5: t3 = a + b</code></pre>
+Let \(e\) be \(a+b\). The universe is \(\{e\}\).
+<div class="table-wrap"><table>
+<tr><th>Block</th><th>gen</th><th>kill</th><th>IN</th><th>OUT</th></tr>
+<tr><td>B1</td><td>{e}</td><td>∅</td><td>∅</td><td>{e}</td></tr>
+<tr><td>B2</td><td>∅</td><td>∅</td><td>{e}</td><td>{e}</td></tr>
+<tr><td>B3</td><td>{e}</td><td>∅</td><td>{e}</td><td>{e}</td></tr>
+<tr><td>B4</td><td>∅</td><td>{e}</td><td>{e}</td><td>∅</td></tr>
+<tr><td>B5</td><td>{e}</td><td>∅</td><td>∅</td><td>{e}</td></tr>
+</table></div>
+At the entry of B5, \(e\) is not available: the path through B4 redefines \(a\), so the value computed in B1 is stale. The intersection of OUT[B3]={e} and OUT[B4]=∅ is ∅. B5 computes \(e\) again, so \(e\) is available at its exit, but that does not help the computation at its entry. If B4 did not redefine \(a\), the intersection would be {e}, and the computation in B5 could reuse the earlier value.</div>
+
+<h3>10.7 Global common-subexpression elimination</h3>
+<p>Available expressions tells you <em>where</em> an expression is guaranteed to have been computed. Global CSE uses that fact to replace a recomputation with a use of the earlier value. The replacement is safe when:</p>
+<ul class="tight">
+<li>the expression is available at the point (every path computed it);</li>
+<li>a single temporary or variable holds that value on every path, or the compiler inserts a merge/phi to name it;</li>
+<li>no side effect or aliasing write has changed the operands since the computation;</li>
+<li>the expression is pure (or the language guarantees the same result and exceptions).</li>
+</ul>
+<p>In a structured program where one computation dominates the later one, the dominating temporary is the natural representative. In a general CFG, the earlier computation may be in different blocks on different paths. A compiler can still perform CSE by introducing a fresh temporary and inserting copies or phi functions at the joins, or by working on SSA form, where each value has one definition and the merge is explicit.</p>
+<div class="q"><b>The easy case.</b> If B1 computes <code>t1 = a + b</code> and B5 is reached only through B1, with no redefinition of <code>a</code> or <code>b</code>, then <code>t3 = a + b</code> in B5 can become <code>t3 = t1</code>. The available-expression analysis proves the value is still current; the dominating definition supplies the name. In the branch example above, the path through B4 breaks the proof, so the replacement is not safe without a merge.</div>
+
+<div class="key"><b>Key.</b> Reaching definitions: forward may, union, “which definitions can get here?” Live variables: backward may, union, “which values will be used later?” Available expressions: forward must, intersection, “which expressions are already computed on every path?” Constant propagation: forward, lattice meet, “which variables have the same constant on every path?”</div>
+<div class="trap"><b>Heads-up: available expressions is not the same as “the expression was computed somewhere before.”</b> It must be computed on <em>every</em> path, and its operands must not be redefined afterward. A computation in one branch does not make the expression available after the branch joins.</div>
+<div class="trap"><b>Heads-up: global CSE needs a name for the shared value.</b> Knowing that \(a+b\) is available does not by itself say which temporary holds it. If the computations are in different blocks, you may need a merge (phi) or a fresh temporary. “Available” is the proof of safety; naming is a separate implementation problem.</div>
+<h3>10.8 Constant propagation</h3>
+<p><b>Constant propagation</b> asks: at this point, does variable \(x\) have the same constant value on every path? If yes, replace uses of \(x\) by that constant and fold the arithmetic. It is a forward analysis over the constant lattice from Section 10.2: \(\top\) means “no information,” a constant \(c\) means “definitely \(c\),” and \(\bot\) means “not a constant” because paths disagree or the value is unknown.</p>
+<p>The transfer function for a block is straightforward:</p>
+<ul class="tight">
+<li><code>x = c</code>: set \(x\) to \(c\).</li>
+<li><code>x = y</code>: copy \(y\)’s value.</li>
+<li><code>x = y op z</code>: if both operands are constants, evaluate the operation; otherwise set \(x\) to \(\bot\).</li>
+<li>Any other variable keeps its incoming value.</li>
+</ul>
+<p>At a join, take the meet: \(\top\sqcap c=c\), \(c\sqcap c=c\), and \(c\sqcap d=\bot\) for \(c\neq d\). Parameters and external inputs start at \(\bot\) (they can be anything); locals start at \(\top\) until assigned. The iteration moves downward from \(\top\) toward constants or \(\bot\).</p>
+
+<div class="q"><b>Constants that survive a branch.</b>
+<pre><code>B1: x = 1
+B2: if p goto B3 else B4
+B3: y = 2
+    goto B5
+B4: y = 2
+    goto B5
+B5: z = x + y</code></pre>
+At B5, \(x=1\) on both paths, and \(y=2\) on both paths, so \(z=3\). The meet of \(2\) and \(2\) is \(2\), not \(\bot\). If B3 assigned \(y=3\) instead, the meet at B5 would be \(2\sqcap3=\bot\), and \(z\) would not be constant. The condition \(p\) is irrelevant: constant propagation does not need to know which branch is taken when both branches agree.</div>
+
+<div class="q"><b>A loop kills a constant.</b> If \(x=1\) before a loop and the loop body assigns \(x=2\), then at the loop header the incoming value from the preheader is 1 and the value on the back edge is 2. The meet is \(\bot\). Even though the first iteration sees 1, the analysis must be correct for every iteration, so \(x\) is not a constant at the header. This is the data-flow version of “one assignment is not enough; every path must agree.”</div>
+
+<p><b>Sparse conditional constant propagation</b> (SCCP) goes further: it tracks which CFG edges are executable. If a branch condition is constant, only the feasible edge is considered, and values from the unreachable edge do not pollute the meet. This can discover constants that plain propagation misses, and it can prove branches dead. The price is a more complex algorithm that couples constant values with reachability.</p>
+
+<div class="trap"><b>Heads-up: folding a trapping operation can change behavior.</b> If <code>x/0</code> would raise an exception or terminate the program at run time, replacing it with a compile-time error or a arbitrary value is not semantics-preserving. Fold only when the language guarantees the operation is safe, or when the exceptional behavior is preserved. The same caution applies to overflow and to floating-point exceptions.</div>
+
+<h3>10.9 Dominators and loops</h3>
+<p>Many optimizations need to know which blocks are inside a loop and which block controls entry to another. The foundation is <b>dominance</b>. A block \(d\) <b>dominates</b> a block \(n\) if every path from entry to \(n\) passes through \(d\). Every block dominates itself, and the entry dominates every reachable block.</p>
+<p>Dominators are a forward must analysis over sets of blocks:</p>
+<div class="eq">\[ \mathrm{Dom}(\text{entry})=\{\text{entry}\},\qquad \mathrm{Dom}(n)=\{n\}\cup\bigcap_{p\in\mathrm{pred}(n)}\mathrm{Dom}(p). \]</div>
+<p>Initialize \(\mathrm{Dom}(n)\) to the set of all blocks for \(n\neq\text{entry}\), then intersect downward. The <b>immediate dominator</b> \(\mathrm{idom}(n)\) is the closest strict dominator of \(n\); the edges \(n\to\mathrm{idom}(n)\) form the <b>dominator tree</b>.</p>
+<div class="q"><b>Dominators on a loop.</b> CFG: \(B_1\to B_2\), \(B_1\to B_3\), \(B_2\to B_4\), \(B_3\to B_4\), \(B_4\to B_5\), \(B_5\to B_4\).
+<div class="table-wrap"><table>
+<tr><th>Block</th><th>Dominators</th><th>Immediate dominator</th></tr>
+<tr><td>B1</td><td>{B1}</td><td>—</td></tr>
+<tr><td>B2</td><td>{B1,B2}</td><td>B1</td></tr>
+<tr><td>B3</td><td>{B1,B3}</td><td>B1</td></tr>
+<tr><td>B4</td><td>{B1,B4}</td><td>B1</td></tr>
+<tr><td>B5</td><td>{B1,B4,B5}</td><td>B4</td></tr>
+</table></div>
+The edge \(B_5\to B_4\) is a <b>back edge</b> because \(B_4\) dominates \(B_5\). The <b>natural loop</b> of that back edge is the header \(B_4\) plus every block that can reach \(B_5\) without passing through \(B_4\): here \(\{B_4,B_5\}\). \(B_4\) is the loop header; \(B_5\) is the latch.</div>
+<p>A <b>preheader</b> is a new block inserted before the loop header, with a single edge to the header and no other predecessors. It gives loop-invariant code a safe place to execute once, before the loop. <b>Loop-invariant code motion</b> moves an instruction out of the loop if its operands do not change in the loop, it has no side effects, moving it does not introduce a trap on a path that would not have executed it, and the definition dominates all uses. The safety conditions matter: moving a division out of a loop can turn a program that never divides by zero into one that does.</p>
+<p><b>Strength reduction</b> in loops often uses <b>induction variables</b>: variables that change by a fixed amount each iteration. If <code>i</code> increases by 1 and <code>A[i]</code> is addressed as <code>base + i*w</code>, a new pointer <code>p</code> can start at <code>base</code> and increase by <code>w</code> each iteration. The multiplication disappears, and the loop has one fewer expensive operation.</p>
+
+<h3>10.10 The analyses side by side</h3>
+<div class="table-wrap"><table>
+<tr><th>Analysis</th><th>Direction</th><th>May / must</th><th>Combine</th><th>Gen / kill</th><th>Start</th><th>Main use</th></tr>
+<tr><td>Reaching definitions</td><td>forward</td><td>may</td><td>union</td><td>definitions</td><td>OUT = ∅</td><td>constant propagation, use-def chains</td></tr>
+<tr><td>Live variables</td><td>backward</td><td>may</td><td>union</td><td>use / def</td><td>IN = ∅</td><td>dead code, register allocation</td></tr>
+<tr><td>Available expressions</td><td>forward</td><td>must</td><td>intersection</td><td>expressions</td><td>OUT = U (except entry)</td><td>global CSE</td></tr>
+<tr><td>Constant propagation</td><td>forward</td><td>meet over paths</td><td>lattice meet</td><td>transfer on values</td><td>⊤ / ⊥ at inputs</td><td>folding, branch pruning</td></tr>
+<tr><td>Dominators</td><td>forward</td><td>must</td><td>intersection</td><td>{n} ∪ …</td><td>all blocks</td><td>loops, control dependence</td></tr>
+</table></div>
+
+<p>The <b>MOP</b> solution is the ideal answer obtained by combining the transfer functions over all paths. The <b>MFP</b> solution is the fixed point the iterative algorithm computes. For distributive bit-vector frameworks — reaching definitions, liveness, available expressions — MFP and MOP coincide. For analyses with richer lattices, such as constant propagation, the fixed point may be less precise than the path-specific ideal, but it is still safe. The iterative algorithm is popular because it is simple and usually fast; the theory explains when its answer is exactly the path-based one.</p>
+
+<div class="key"><b>Key.</b> Data-flow analysis is four choices plus iteration: direction, may/must, transfer (gen/kill), and initialization. Reaching definitions and liveness are may/union; available expressions and dominators are must/intersection; constant propagation uses a lattice meet. Iterate to a fixed point, then use the facts for folding, dead-code removal, register allocation, or CSE.</div>
+<div class="trap"><b>Heads-up: may and must are not “more” and “less” of the same set.</b> A may analysis over-approximates possibilities (safe for liveness, reaching definitions); a must analysis under-approximates guarantees (safe for available expressions, dominators). Switching the combine operator changes the meaning, not just the precision.</div>
+<div class="trap"><b>Heads-up: data-flow facts are only as good as the CFG and the aliasing model.</b> If a pointer write can modify <code>a</code>, an analysis that assumes it cannot will produce wrong facts. Real compilers combine data-flow with alias analysis, call graphs, and language-specific side-effect rules. The equations are the skeleton; the semantic assumptions are the safety proof.</div>
+<h2 id="toolkit">11. The Superpowers toolkit</h2>
+<p>Forty moves, in the order you will need them. Each one is a mechanism, not a slogan.</p>
+<ol class="tight">
+<li><b>Draw the pipeline first.</b> Source → tokens → tree → typed tree → IR → optimized IR → target. Label what each arrow hands on. Most “which phase?” questions answer themselves once the handoffs are visible.</li>
+<li><b>Separate token, lexeme, pattern.</b> Token = class; lexeme = actual characters; pattern = regular expression describing the class. Attributes carry the identifier’s symbol-table pointer or the number’s value.</li>
+<li><b>Apply longest match, then rule order.</b> The lexer takes the longest prefix that matches any rule; ties go to the earlier rule. This is why <code>&gt;=</code> beats <code>&gt;</code> and keywords beat identifiers.</li>
+<li><b>Remember regex precedence.</b> Star binds tightest, then concatenation, then union. Parenthesize when in doubt; \(ab^*|c\) is not \((ab)^*|c\).</li>
+<li><b>Build an NFA with five shapes.</b> Symbol, epsilon, union, concatenation, star. Thompson gives \(O(|r|)\) states and a single start/accept pair.</li>
+<li><b>Convert NFA to DFA with closure + move.</b> A DFA state is a set of NFA states; start at \(\varepsilon\text{-closure}(q_0)\); accept if the set contains an NFA accept state.</li>
+<li><b>Minimize by splitting blocks.</b> Start with accepting/non-accepting; split when a symbol sends states to different blocks; repeat. Do not merge states just because they share a label.</li>
+<li><b>Use the regular/context-free boundary.</b> Regex cannot count arbitrary nesting; a stack (parser) can. Comments with nesting, balanced brackets, and indentation blocks are parser territory.</li>
+<li><b>Say “grammar generates, parser recognizes.”</b> A derivation is a proof; a parse tree is the grouping; leftmost/rightmost is only an order.</li>
+<li><b>Test ambiguity with two trees.</b> If one terminal string has two parse trees (or two leftmost derivations), the grammar is ambiguous. The language may still have another, unambiguous grammar.</li>
+<li><b>Encode precedence by layering, associativity by recursion.</b> \(E\to E+T\mid T\), \(T\to T*F\mid F\) makes <code>*</code> tighter and <code>+</code> left-associative. The tree does the work; no extra precedence rule is needed.</li>
+<li><b>Resolve dangling else structurally.</b> Either use the matched/unmatched grammar or accept the default “else binds to the nearest unmatched if.” Do not leave the ambiguity implicit.</li>
+<li><b>Compute FIRST upward.</b> Terminals give themselves; a nonterminal collects FIRST of its alternatives; a string collects FIRST of the first symbol and continues through nullable symbols; add \(\varepsilon\) only if the whole string is nullable.</li>
+<li><b>Compute FOLLOW from the start.</b> Put \(\$\) in FOLLOW(S); for \(A\to\alpha B\beta\), add FIRST(\(\beta\)) minus \(\varepsilon\); if \(\beta\) is nullable, add FOLLOW(A). FOLLOW never contains \(\varepsilon\).</li>
+<li><b>Test LL(1) by the table.</b> One production per cell. Alternatives need disjoint FIRST sets; a nullable alternative needs disjointness with FOLLOW. “No left recursion and no common prefix” is necessary but not sufficient.</li>
+<li><b>Kill left recursion mechanically.</b> \(A\to A\alpha\mid\beta\) becomes \(A\to\beta A'\), \(A'\to\alpha A'\mid\varepsilon\). For indirect recursion, order the nonterminals and substitute in order.</li>
+<li><b>Left-factor common prefixes.</b> \(A\to\alpha\beta_1\mid\alpha\beta_2\) becomes \(A\to\alpha A'\), \(A'\to\beta_1\mid\beta_2\). Delay the choice until the lookahead can make it.</li>
+<li><b>Run an LL(1) parser with a stack.</b> Top nonterminal + lookahead → table entry; push the right side reversed; match terminals; accept at \(\$\). \(\varepsilon\)-productions are chosen on FOLLOW.</li>
+<li><b>Tell the LR story.</b> Left-to-right scan, rightmost derivation in reverse, stack holds a viable prefix, handle on top, reduce it. The table decides shift, reduce, accept, error.</li>
+<li><b>Build LR(0) items with closure and goto.</b> Dot = progress. Closure adds productions for the nonterminal after the dot; goto moves the dot over a symbol. Completed items are reduction candidates.</li>
+<li><b>Use FOLLOW for SLR.</b> Reduce \(A\to\alpha\) only on tokens in FOLLOW(A). If a state also shifts one of those tokens, SLR has a conflict; the grammar may still be LR(1).</li>
+<li><b>Use exact lookahead for LR(1).</b> An item \([A\to\alpha\cdot\beta,a]\) reduces only on \(a\). Closure computes \(b\in\text{FIRST}(\beta a)\). LALR merges same-core states and unions lookaheads; this can create reduce/reduce conflicts but not new shift/reduce ones.</li>
+<li><b>Keep the power order straight.</b> LR(0) ⊂ SLR(1) ⊂ LALR(1) ⊂ LR(1). Stronger means more grammars handled without conflicts, not more languages.</li>
+<li><b>Resolve conflicts deliberately.</b> Rewrite the grammar, add precedence/associativity, or choose a default and document it. On shift/reduce: higher token precedence shifts, lower reduces, equal uses associativity.</li>
+<li><b>Distinguish synthesized from inherited.</b> Synthesized comes from children and flows up; inherited comes from the parent or left siblings and flows down/sideways. Annotate the tree; do not guess.</li>
+<li><b>Use S for bottom-up, L for top-down.</b> S-attributed = synthesized only, evaluate at reductions. L-attributed = inherited only from the parent/left siblings, evaluate left-to-right depth-first.</li>
+<li><b>Write 3AC with one operator per instruction.</b> Quadruples: op, arg1, arg2, result. Triples: result by position. Indirect triples: a reorderable pointer table.</li>
+<li><b>Backpatch forward jumps.</b> Keep true/false/next lists; <code>makelist</code>, <code>merge</code>, <code>backpatch</code>. For <code>if</code>, patch the true list to the then-start and merge the false list into next; for <code>while</code>, patch the body’s next list to the condition and the false list to the exit.</li>
+<li><b>Use a DAG or value numbering for local CSE.</b> Hash <code>(operator, operand value numbers)</code>; identical keys are the same computation. Reuse the earlier result if operands have not changed and the operation is pure.</li>
+<li><b>Check types by structure, name, or inference.</b> Structural equivalence compares shape; name equivalence compares declarations; unification solves type equations with an occurs check. Insert coercions only where the language allows them.</li>
+<li><b>Draw the activation record.</b> Parameters, return address, saved registers, access link, control link, locals, temporaries. Access link → lexical parent; control link → caller. Static scope follows access links; dynamic scope follows control links.</li>
+<li><b>Know the parameter modes.</b> Value copies; reference aliases; value-result copies in and out; name re-evaluates each use; need memoizes. Aliasing makes swaps and copy-out order tricky.</li>
+<li><b>Find leaders, then blocks.</b> First instruction; jump targets; instructions after jumps. A block is a leader to the next leader minus one. Edges are possible control transfers; the result is the CFG.</li>
+<li><b>Run the local checklist.</b> Fold constants, propagate copies and constants, apply safe identities, reduce strength, eliminate dead code, reuse common subexpressions, then peephole. Check side effects and exceptional behavior every time.</li>
+<li><b>Ask the data-flow four questions.</b> Direction? May or must? Transfer (gen/kill)? Initial value? Then write IN/OUT equations and iterate to a fixed point.</li>
+<li><b>Recognize the four core analyses.</b> Reaching definitions: forward may union, gen/kill definitions. Live variables: backward may union, use/def. Available expressions: forward must intersection, gen/kill expressions. Constant propagation: forward lattice meet, \(\top\)/constant/\(\bot\).</li>
+<li><b>Initialize for the fixed point you want.</b> May analyses start at bottom (empty) and move up; must analyses start at top (universal) and move down. Entry/exit boundary conditions are part of the analysis, not an afterthought.</li>
+<li><b>Use liveness for registers and dead code.</b> Two variables interfere if both are live at one point. A definition is dead if its target is not live immediately after it and the instruction has no other effect.</li>
+<li><b>Use available expressions for global CSE.</b> The expression must be computed on every path and its operands unchanged. Then supply a name for the shared value — a dominating temporary, a merge, or an SSA phi.</li>
+<li><b>Find loops with dominators.</b> A back edge \(n\to h\) has a header \(h\) that dominates \(n\); the natural loop is \(h\) plus nodes that reach \(n\) without passing \(h\). Use a preheader for loop-invariant motion, and check traps and side effects before moving code.</li>
+</ol>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var b=document.getElementById('theme-toggle');
+  if(!b) return;
+  function label(){
+    b.textContent = document.documentElement.getAttribute('data-theme')==='dark' ? '☀' : '🌙';
+  }
+  label();
+  b.addEventListener('click',function(){
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    var next = dark ? 'light' : 'dark';
+    if(next==='dark') document.documentElement.setAttribute('data-theme','dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try{localStorage.setItem('compiler-design-notes-theme', next);}catch(e){}
+    label();
+  });
+});
+</script>
+</body></html>
